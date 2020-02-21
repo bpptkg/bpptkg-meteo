@@ -1,0 +1,7 @@
+*.py[co]
+*.sqlite3
+
+venv/
+venv3/
+.vscode/
+.idea/
