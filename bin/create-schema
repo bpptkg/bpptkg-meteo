@@ -3,6 +3,7 @@
 import sys
 import argparse
 
+from sqlalchemy import create_engine
 from meteo.models import cr6
 
 SCHEMAS = {
@@ -21,11 +22,13 @@ def parse_args():
 
 def main():
     args = parse_args()
-    if args.name not in SCHEMAS:
-        sys.exit('Model name {} is not supported.'.format(args.name))
+    if args.model not in SCHEMAS:
+        sys.exit('Model name {} is not supported.'.format(args.model))
 
-    base_class = SCHEMAS[args.name]['base']
-    base_class.metadata.create_all(args.url)
+    base_class = SCHEMAS[args.model]['base']
+    engine = create_engine(args.url)
+    base_class.prepare(engine, reflect=True)
+    base_class.metadata.create_all(engine)
 
 
 if __name__ == '__main__':
