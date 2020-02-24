@@ -1,3 +1,28 @@
+"""
+bpptkg-meteo vaisala app.
+
+It download meteorology data from Pasarbubar station web service at 192.168.9.47
+and insert it to database. Schema table is defined in 'meteo.models.cr6.CR6'
+class.
+
+You can add another schema table in bpptkg-meteo package by submitting
+pull/merge request to the project repository.
+
+You can also write another app using bpptkg-meteo package.
+
+Usage:
+
+Just provide SQLAlchemy database engine to the script argument and add the
+script to system crontab by 30 minutes or so. For example:
+
+    $ python /path/to/app.py 'mysql://iori:secret@127.0.0.1/meteo'
+
+Add -v option to run the app in debugging mode.
+
+It will create 'last' file that store the latest data timestamp in data
+directory. You can view runtime log in logs directory.
+"""
+
 import os
 import io
 import csv
@@ -144,7 +169,7 @@ def parse_last_timestamp(df):
         return None
     date_string = df['timestamp'].iloc[-1]
 
-    # We add one minutes forward to prevent data duplication at edge.
+    # We add one minutes forward to prevent data duplication at the edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
     return date_obj.strftime(UTC_DATE_FORMAT)
 
