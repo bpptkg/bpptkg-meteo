@@ -1,8 +1,10 @@
 *.py[co]
 *.sqlite3
+*.egg-info
 
 venv/
 venv3/
 .vscode/
 .idea/
 docs/_build/
+dist/
