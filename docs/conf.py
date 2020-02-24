@@ -15,13 +15,14 @@ import sys
 import datetime
 sys.path.insert(0, os.path.abspath('..'))
 
+from meteo import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = 'bpptkg-meteo'
 copyright = '{}, BPPTKG'.format(datetime.datetime.now().year)
 author = 'Indra Rudianto'
-release = '0.0.1'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 
