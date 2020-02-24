@@ -37,7 +37,6 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 CACHE_DIR = os.path.join(BASE_DIR, 'cache')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 LT_FILE = os.path.join(DATA_DIR, 'last')
-QUEUE_FILE = os.path.join(DATA_DIR, 'queue')
 
 TIME_ZONE = 'Asia/Jakarta'
 UTC_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
@@ -140,13 +139,23 @@ def get_last_timestamp(path):
     return date_string
 
 
-def get_last_timestamp_from_buffer(buf):
-    df = read_csv(io.StringIO(buf), header=None, names=COLUMNS)
+def parse_last_timestamp(df):
+    if df.empty:
+        return None
     date_string = df['timestamp'].iloc[-1]
 
     # We add one minutes forward to prevent data duplication at edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
     return date_obj.strftime(UTC_DATE_FORMAT)
+
+
+def get_last_timestamp_from_buffer(buf):
+    df = read_csv(io.StringIO(buf), header=None, names=COLUMNS)
+    return parse_last_timestamp(df)
+
+
+def get_last_timestamp_from_df(df):
+    return parse_last_timestamp(df)
 
 
 def write_last_timestamp(path, date_string):
@@ -170,12 +179,6 @@ def get_csv_from_queue(path):
     return data
 
 
-def append_to_queue(path, entries):
-    with open(path, 'a+', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=COLUMNS)
-        writer.writerows(entries)
-
-
 def erase_file_content(path):
     with open(path, 'w') as f:
         pass
@@ -183,12 +186,15 @@ def erase_file_content(path):
 
 def insert_to_db(url, entries):
     engine = create_engine(url)
+    cr6.Base.prepare(engine, reflect=True)
+
     try:
         with sessions.session_scope(engine) as session:
             session.bulk_insert_mappings(cr6.CR6, entries)
             session.commit()
         return True
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
+        logger.error(e)
         return False
 
 
@@ -206,11 +212,17 @@ def process_csv(url, buf, **kwargs):
         ok = insert_to_db(url, df.to_dict(orient='records'))
         if ok:
             logger.info('Data successfully inserted to database.')
-            erase_file_content(QUEUE_FILE)
+
+            last = get_last_timestamp_from_df(df)
+            if last is None:
+                return
+
+            logger.info('Last data timestamp (+1 minute from last timestamp '
+                        'in database): %s', last)
+            logger.info('Writing request end time to LT_FILE...')
+            write_last_timestamp(LT_FILE, last)
         else:
             logger.info('Data failed to be inserted to database.')
-            logger.info('Appending to queue file...')
-            append_to_queue(QUEUE_FILE, df.to_dict(orient='records'))
     else:
         logger.debug('Running in dry mode. Not inserting to database.')
 
@@ -249,10 +261,6 @@ def main():
     logger.info('Processing start at: %s', datetime.datetime.now(
         pytz.timezone(TIME_ZONE)).isoformat())
 
-    logger.info('Processing data from queue file...')
-    buf = get_csv_from_queue(QUEUE_FILE)
-    process_csv(args.url, buf, dry=args.verbose)
-
     check_ltfile(LT_FILE)
 
     end = now.strftime(UTC_DATE_FORMAT)
@@ -274,11 +282,6 @@ def main():
 
     buf = parse_data(response)
     process_csv(args.url, buf, dry=args.verbose)
-
-    last = get_last_timestamp_from_buffer(buf)
-    logger.info('Last data timestamp (+1 minute): %s', last)
-    logger.info('Writing request end time to LT_FILE...')
-    write_last_timestamp(LT_FILE, last)
 
     logger.info('Processing end at: %s', datetime.datetime.now(
         pytz.timezone(TIME_ZONE)).isoformat())
