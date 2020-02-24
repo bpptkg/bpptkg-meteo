@@ -5,3 +5,4 @@ venv/
 venv3/
 .vscode/
 .idea/
+docs/_build/
