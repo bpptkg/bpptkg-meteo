@@ -11,6 +11,7 @@ def load_session(engine):
     return scoped_session(session_factory)
 
 
+@contextmanager
 def session_scope(engine):
     session = load_session(engine)
     try:
