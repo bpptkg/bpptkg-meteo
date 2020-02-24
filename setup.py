@@ -13,12 +13,12 @@ def read(filename):
 setup(
     name='bpptkg-meteo',
     version=__version__,
-    description='BPPTKG weather station data fetcher library.',
+    description='BPPTKG weather station data fetcher and schema tables library.',
     long_description=read('README.md'),
     long_description_file_content_type='text/markdown',
     license='MIT',
     install_requires=[
-        'sqlalchemy'
+        'sqlalchemy',
     ],
     author='Indra Rudianto',
     author_email='indrarudianto.official@gmail.com',
