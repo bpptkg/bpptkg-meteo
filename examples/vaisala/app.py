@@ -293,8 +293,7 @@ def main():
     logger.info('Last time from file: %s', start)
 
     if not start:
-        start = now.strftime(UTC_DATE_FORMAT)
-        end = (now + datetime.timedelta(minutes=30)).strftime(UTC_DATE_FORMAT)
+        start = (now - datetime.timedelta(hours=1)).strftime(UTC_DATE_FORMAT)
 
     logger.info('Request start time: %s', start)
     logger.info('Request end time: %s', end)
