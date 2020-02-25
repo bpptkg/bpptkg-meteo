@@ -32,6 +32,7 @@ import argparse
 import datetime
 import logging
 
+from urllib.error import URLError
 from urllib.request import urlopen
 from urllib.parse import urlencode
 
@@ -189,11 +190,10 @@ def write_last_timestamp(path, date_string):
 
 
 def check_ltfile(path):
-    now = datetime.datetime.now(pytz.timezone(TIME_ZONE))
     if not os.path.exists(path):
         logger.debug('LT_FILE is not exists. Creating LT_FILE...')
         with open(path, 'w+') as f:
-            f.write(now.strftime(UTC_DATE_FORMAT))
+            pass
     else:
         logger.debug('LT_FILE already exists.')
 
@@ -284,7 +284,7 @@ def main():
 
     logger.info('-' * 80)
     logger.info('Processing start at: %s', datetime.datetime.now(
-        pytz.timezone(TIME_ZONE)).isoformat())
+        pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
 
     check_ltfile(LT_FILE)
 
@@ -299,16 +299,21 @@ def main():
     logger.info('Request end time: %s', end)
 
     logger.info('Requesting meteo data from web service...')
-    response = get_meteo_data(start, end)
+    try:
+        response = get_meteo_data(start, end)
+    except URLError as e:
+        logger.error(e)
+        sys.exit(1)
+
     if not response:
         logger.info('Response is empty. Skipping...')
-        sys.exit()
+        sys.exit(1)
 
     buf = parse_data(response)
-    process_csv(args.url, buf, dry=args.verbose)
+    process_csv(args.url, buf, dry=args.dry)
 
     logger.info('Processing end at: %s', datetime.datetime.now(
-        pytz.timezone(TIME_ZONE)).isoformat())
+        pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
     logger.info('-' * 80)
 
 
