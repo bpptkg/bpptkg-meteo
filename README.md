@@ -1,6 +1,6 @@
 # bpptkg-meteo
 
-BPPTKG weather station data fetcher.
+BPPTKG weather station data fetcher and schema tables library.
 
 ## Installation
 
@@ -15,7 +15,7 @@ documentation by running these commands:
 
     cd /path/to/bpptkg-meteo/
     pip install -r requirements.txt
-    sphinx-build -b html docs/ /path/to/build/ 
+    sphinx-build -b html docs/ /path/to/build/
 
 ## Contributing
 
