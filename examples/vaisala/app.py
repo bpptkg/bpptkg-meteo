@@ -31,6 +31,7 @@ import pytz
 import argparse
 import datetime
 import logging
+import tempfile
 
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -43,6 +44,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from meteo.db import sessions
 from meteo.models import cr6
 
+if sys.platform != 'win32':
+    import fcntl
 
 COLUMNS = [
     'timestamp',
@@ -63,11 +66,80 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 CACHE_DIR = os.path.join(BASE_DIR, 'cache')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 LT_FILE = os.path.join(DATA_DIR, 'last')
+LOCKFILE = os.path.join(DATA_DIR, 'vaisala.lock')
 
 TIME_ZONE = 'Asia/Jakarta'
 UTC_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 logger = logging.getLogger(__name__)
+
+
+class SingleInstanceException(Exception):
+    pass
+
+
+class SingleInstance(object):
+    """
+    A singleton object that can be instantiated once.
+
+    It is useful if the script is executed by crontab at small amounts of time.
+
+    Reference: https://github.com/pycontribs/tendo/blob/master/tendo/singleton.py
+    """
+
+    def __init__(self, flavor_id='', lockfile=''):
+        self.initialized = False
+        if lockfile:
+            self.lockfile = lockfile
+        else:
+            basename = os.path.splitext(os.path.abspath(sys.argv[0]))[0].replace(
+                "/", "-").replace(":", "").replace("\\", "-") + '-%s' % flavor_id + '.lock'
+            self.lockfile = os.path.normpath(
+                tempfile.gettempdir() + '/' + basename)
+
+        logger.debug('SingleInstance lockfile: %s', self.lockfile)
+        if sys.platform == 'win32':
+            try:
+                if os.path.exists(self.lockfile):
+                    os.unlink(self.lockfile)
+                self.fd = os.open(self.lockfile, os.O_CREAT |
+                                  os.O_EXCL | os.O_RDWR)
+            except OSError:
+                type, e, tb = sys.exc_info()
+                if os.errno == 13:
+                    logger.error(
+                        'Another instance is already running. Quitting.')
+                    raise SingleInstanceException()
+                raise
+        else:
+            self.fp = open(self.lockfile, 'w')
+            self.fp.flush()
+            try:
+                fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except (IOError, BlockingIOError):
+                logger.error('Another instance is already running. Quitting.')
+                raise SingleInstanceException()
+
+        self.initialized = True
+
+    def __del__(self):
+        if not self.initialized:
+            return
+        try:
+            if sys.platform == 'win32':
+                if hasattr(self, 'fd'):
+                    os.close(self.fd)
+                    os.unlink(self.lockfile)
+            else:
+                fcntl.lockf(self.fp, fcntl.LOCK_UN)
+                if os.path.isfile(self.lockfile):
+                    os.unlink(self.lockfile)
+        except Exception as e:
+            if logger:
+                logger.error(e)
+            else:
+                print('Unloggable error: %s', e)
+            sys.exit(1)
 
 
 def parse_args():
@@ -252,70 +324,88 @@ def process_csv(url, buf, **kwargs):
         logger.debug('Running in dry mode. Not inserting to database.')
 
 
-def main():
-    args = parse_args()
-    now = datetime.datetime.now(pytz.timezone(TIME_ZONE))
+class VaisalaApp(SingleInstance):
+    """
+    Vaisala app class that allow only one instance to be run.
+    """
 
-    log_format = '%(asctime)s %(name)s %(levelname)-8s %(message)s'
-    log_datefmt = '%b %d %Y %H:%M:%S'
-    log_filename = os.path.join(
-        LOG_DIR,
-        now.strftime('vaisala_%Y-%m-%d.log')
-    )
+    def __init__(self, lastfile='', **kwargs):
+        if lastfile:
+            self.lastfile = lastfile
+        else:
+            # TODO(indra): create lasfile in data directory.
+            self.lastfile = LT_FILE
+        super().__init__(**kwargs)
 
-    if args.verbose:
-        log_mode = logging.DEBUG
-    else:
-        log_mode = logging.INFO
+    def run(self):
+        args = parse_args()
+        now = datetime.datetime.now(pytz.timezone(TIME_ZONE))
 
-    logging.basicConfig(
-        level=log_mode,
-        format=log_format,
-        datefmt=log_datefmt,
-        filename=log_filename,
-        filemode='a'
-    )
+        log_format = '%(asctime)s %(name)s %(levelname)-8s %(message)s'
+        log_datefmt = '%b %d %Y %H:%M:%S'
+        log_filename = os.path.join(
+            LOG_DIR,
+            now.strftime('vaisala_%Y-%m-%d.log')
+        )
 
-    console = logging.StreamHandler()
-    console.setLevel(log_mode)
-    formatter = logging.Formatter(log_format)
-    console.setFormatter(formatter)
-    logger.addHandler(console)
+        if args.verbose:
+            log_mode = logging.DEBUG
+        else:
+            log_mode = logging.INFO
 
-    logger.info('-' * 80)
-    logger.info('Processing start at: %s', datetime.datetime.now(
-        pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
+        logging.basicConfig(
+            level=log_mode,
+            format=log_format,
+            datefmt=log_datefmt,
+            filename=log_filename,
+            filemode='a'
+        )
 
-    check_ltfile(LT_FILE)
+        console = logging.StreamHandler()
+        console.setLevel(log_mode)
+        formatter = logging.Formatter(log_format)
+        console.setFormatter(formatter)
+        logger.addHandler(console)
 
-    end = now.strftime(UTC_DATE_FORMAT)
-    start = get_last_timestamp(LT_FILE)
-    logger.info('Last time from file: %s', start)
+        logger.info('-' * 80)
+        logger.info('Processing start at: %s', datetime.datetime.now(
+            pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
 
-    if not start:
-        start = (now - datetime.timedelta(hours=1)).strftime(UTC_DATE_FORMAT)
+        check_ltfile(self.lastfile)
 
-    logger.info('Request start time: %s', start)
-    logger.info('Request end time: %s', end)
+        end = now.strftime(UTC_DATE_FORMAT)
+        start = get_last_timestamp(self.lastfile)
+        logger.info('Last time from file: %s', start)
 
-    logger.info('Requesting meteo data from web service...')
-    try:
-        response = get_meteo_data(start, end)
-    except URLError as e:
-        logger.error(e)
-        sys.exit(1)
+        if not start:
+            one_hour_ago = now - datetime.timedelta(hours=1)
+            start = one_hour_ago.strftime(UTC_DATE_FORMAT)
 
-    if not response:
-        logger.info('Response is empty. Skipping...')
-        sys.exit(1)
+        logger.info('Request start time: %s', start)
+        logger.info('Request end time: %s', end)
 
-    buf = parse_data(response)
-    process_csv(args.url, buf, dry=args.dry)
+        logger.info('Requesting meteo data from web service...')
+        try:
+            response = get_meteo_data(start, end)
+        except URLError as e:
+            logger.error(e)
+            sys.exit(1)
 
-    logger.info('Processing end at: %s', datetime.datetime.now(
-        pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
-    logger.info('-' * 80)
+        if not response:
+            logger.info('Response is empty. Skipping...')
+            sys.exit(1)
+
+        buf = parse_data(response)
+        process_csv(args.url, buf, dry=args.dry)
+
+        logger.info('Processing end at: %s', datetime.datetime.now(
+            pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
+        logger.info('-' * 80)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        app = VaisalaApp(lastfile=LT_FILE, lockfile=LOCKFILE)
+        app.run()
+    except SingleInstanceException:
+        sys.exit(1)
