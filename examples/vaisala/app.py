@@ -10,17 +10,20 @@ pull/merge request to the project repository.
 
 You can also write another app using bpptkg-meteo package.
 
+Prior to running this script, you must create a database and migrate the model.
+See `create-schema` script in bin/ directory.
+
 Usage:
 
-Just provide SQLAlchemy database engine to the script argument and add the
+Just provide SQLAlchemy database engine URL to the script argument and add the
 script to system crontab by 30 minutes or so. For example:
 
     $ python /path/to/app.py 'mysql://iori:secret@127.0.0.1/meteo'
 
 Add -v option to run the app in debugging mode.
 
-It will create 'last' file that store the latest data timestamp in data
-directory. You can view runtime log in logs directory.
+It will create 'last' file that store the latest data timestamp in data/
+directory. You can view runtime log in logs/ directory.
 """
 
 import os
@@ -178,7 +181,8 @@ def get_meteo_data(start, end):
     """
     Get meteorology data from web service.
 
-    Response is actually CSV data, we decode it and return CSV string.
+    Web service IP address is 192.168.9.47. We request the data with toa5 format
+    (CSV data format) and using data range mode.
     """
     params = {
         'command': 'DataQuery',
@@ -232,17 +236,29 @@ def read_csv(path, **kwargs):
 
 
 def get_last_timestamp(path):
+    """
+    Get last timestamp from lastfile.
+
+    It reads the content of the file and return the content as string.
+    """
     with open(path) as f:
         date_string = f.read()
     return date_string
 
 
 def parse_last_timestamp(df):
+    """
+    Parse last timestamp from dataframe.
+
+    Add one minute forward to prevent the script from fetching the same value.
+    The last timestamp already in database, so we need to fetch the weather data
+    one minute forward.
+    """
     if df.empty:
         return None
     date_string = df['timestamp'].iloc[-1]
 
-    # We add one minutes forward to prevent data duplication at the edge.
+    # We add one minute forward to prevent data duplication at the edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
     return date_obj.strftime(UTC_DATE_FORMAT)
 
@@ -262,6 +278,10 @@ def write_last_timestamp(path, date_string):
 
 
 def check_ltfile(path):
+    """
+    Check whether lastfile is exists or not. If not exists, create the file with
+    empty content.
+    """
     if not os.path.exists(path):
         logger.debug('LT_FILE is not exists. Creating LT_FILE...')
         with open(path, 'w+') as f:
@@ -282,6 +302,14 @@ def erase_file_content(path):
 
 
 def insert_to_db(url, entries):
+    """
+    Insert weather data to the database.
+
+    :param url: SQLAlchemy engine URL.
+    :param entries: List of dictionary of weather data.
+    :return: True if data successfully inserted to the database,
+             otherwise False.
+    """
     engine = create_engine(url)
     cr6.Base.prepare(engine, reflect=True)
 
@@ -327,13 +355,17 @@ def process_csv(url, buf, **kwargs):
 class VaisalaApp(SingleInstance):
     """
     Vaisala app class that allow only one instance to be run.
+
+    It prevents race condition when running multiple instance of classes. So, we
+    only run the instance in one process only. We can make sure that only one
+    process write a content to the lastfile.
     """
 
     def __init__(self, lastfile='', **kwargs):
         if lastfile:
             self.lastfile = lastfile
         else:
-            # TODO(indra): create lasfile in data directory.
+            # TODO(indra): create lastfile in data directory.
             self.lastfile = LT_FILE
         super().__init__(**kwargs)
 
