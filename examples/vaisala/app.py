@@ -44,7 +44,7 @@ LT_FILE = os.path.join(DATA_DIR, 'last')
 LOCKFILE = os.path.join(DATA_DIR, 'vaisala.lock')
 
 TIME_ZONE = 'Asia/Jakarta'
-UTC_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+ISO_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +249,7 @@ def parse_last_timestamp(df):
 
     # We add one minute forward to prevent data duplication at the edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
-    return date_obj.strftime(UTC_DATE_FORMAT)
+    return date_obj.strftime(ISO_DATE_FORMAT)
 
 
 def get_last_timestamp_from_buffer(buf):
@@ -413,17 +413,17 @@ class VaisalaApp(SingleInstance):
 
         logger.info('-' * 80)
         logger.info('Processing start at: %s',
-                    get_current_time().strftime(UTC_DATE_FORMAT))
+                    get_current_time().strftime(ISO_DATE_FORMAT))
 
         check_ltfile(self.lastfile)
 
-        end = now.strftime(UTC_DATE_FORMAT)
+        end = now.strftime(ISO_DATE_FORMAT)
         start = get_last_timestamp(self.lastfile)
         logger.info('Last time from file: %s', start)
 
         if not start:
             one_hour_ago = now - datetime.timedelta(hours=1)
-            start = one_hour_ago.strftime(UTC_DATE_FORMAT)
+            start = one_hour_ago.strftime(ISO_DATE_FORMAT)
 
         logger.info('Request start time: %s', start)
         logger.info('Request end time: %s', end)
@@ -443,7 +443,7 @@ class VaisalaApp(SingleInstance):
         process_csv(args.url, buf, dry=args.dry)
 
         logger.info('Processing end at: %s',
-                    get_current_time().strftime(UTC_DATE_FORMAT))
+                    get_current_time().strftime(ISO_DATE_FORMAT))
         logger.info('-' * 80)
 
 
