@@ -1,46 +1,18 @@
-"""
-bpptkg-meteo vaisala app.
-
-It download meteorology data from Pasarbubar station web service at 192.168.9.47
-and insert it to database. Schema table is defined in 'meteo.models.cr6.CR6'
-class.
-
-You can add another schema table in bpptkg-meteo package by submitting
-pull/merge request to the project repository.
-
-You can also write another app using bpptkg-meteo package.
-
-Prior to running this script, you must create a database and migrate the model.
-See `create-schema` script in bin/ directory.
-
-Usage:
-
-Just provide SQLAlchemy database engine URL to the script argument and add the
-script to system crontab by 30 minutes or so. For example:
-
-    $ python /path/to/app.py 'mysql://iori:secret@127.0.0.1/meteo'
-
-Add -v option to run the app in debugging mode.
-
-It will create 'last' file that store the latest data timestamp in data/
-directory. You can view runtime log in logs/ directory.
-"""
-
-import os
-import io
-import csv
-import sys
-import pytz
 import argparse
+import csv
 import datetime
+import io
 import logging
+import logging.config
+import os
+import sys
 import tempfile
-
 from urllib.error import URLError
-from urllib.request import urlopen
 from urllib.parse import urlencode
+from urllib.request import urlopen
 
 import pandas as pd
+import pytz
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -72,9 +44,16 @@ LT_FILE = os.path.join(DATA_DIR, 'last')
 LOCKFILE = os.path.join(DATA_DIR, 'vaisala.lock')
 
 TIME_ZONE = 'Asia/Jakarta'
-UTC_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+ISO_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 logger = logging.getLogger(__name__)
+
+
+def get_current_time():
+    """
+    Get time aware now.
+    """
+    return datetime.datetime.now(pytz.timezone(TIME_ZONE))
 
 
 class SingleInstanceException(Exception):
@@ -147,11 +126,21 @@ class SingleInstance(object):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('url', help='SQLAlchemy database engine URL.')
-    parser.add_argument('-d', '--dry', action='store_true',
-                        help='Do not insert data to database (dry run).')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Run in debugging mode.')
+    parser.add_argument(
+        'url',
+        help='SQLAlchemy database engine URL '
+        'e.g. mysql://user:password@127.0.0.1/meteo'
+    )
+    parser.add_argument(
+        '-d', '--dry',
+        action='store_true',
+        help='Do not insert data to database (dry run).'
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Run in debugging mode.'
+    )
     return parser.parse_args()
 
 
@@ -260,7 +249,7 @@ def parse_last_timestamp(df):
 
     # We add one minute forward to prevent data duplication at the edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
-    return date_obj.strftime(UTC_DATE_FORMAT)
+    return date_obj.strftime(ISO_DATE_FORMAT)
 
 
 def get_last_timestamp_from_buffer(buf):
@@ -347,7 +336,7 @@ def process_csv(url, buf, **kwargs):
             logger.info('Writing request end time to LT_FILE...')
             write_last_timestamp(LT_FILE, last)
         else:
-            logger.info('Data failed to be inserted to database.')
+            logger.error('Data failed to be inserted to database.')
     else:
         logger.debug('Running in dry mode. Not inserting to database.')
 
@@ -371,47 +360,70 @@ class VaisalaApp(SingleInstance):
 
     def run(self):
         args = parse_args()
-        now = datetime.datetime.now(pytz.timezone(TIME_ZONE))
-
-        log_format = '%(asctime)s %(name)s %(levelname)-8s %(message)s'
-        log_datefmt = '%b %d %Y %H:%M:%S'
-        log_filename = os.path.join(
-            LOG_DIR,
-            now.strftime('vaisala_%Y-%m-%d.log')
-        )
 
         if args.verbose:
-            log_mode = logging.DEBUG
+            log_level = 'DEBUG'
         else:
-            log_mode = logging.INFO
+            log_level = 'INFO'
 
-        logging.basicConfig(
-            level=log_mode,
-            format=log_format,
-            datefmt=log_datefmt,
-            filename=log_filename,
-            filemode='a'
-        )
+        logging_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'default': {
+                    'format': '{asctime} {levelname} {name} {message}',
+                    'style': '{',
+                },
+                'verbose': {
+                    'format': '{asctime} {levelname} {name} {message}',
+                    'style': '{',
+                },
+            },
+            'handlers': {
+                'console': {
+                    'level': log_level,
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'default'
+                },
+                'production': {
+                    'level': log_level,
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'filename': os.path.join(LOG_DIR, 'vaisala.log'),
+                    'maxBytes': 1024 * 1024 * 5,
+                    'backupCount': 7,
+                    'formatter': 'verbose',
+                },
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['console', 'production'],
+                    'level': log_level,
+                },
+                '__main__': {
+                    'handlers': ['console', 'production'],
+                    'level': log_level,
+                    'propagate': False,
+                }
+            }
+        }
 
-        console = logging.StreamHandler()
-        console.setLevel(log_mode)
-        formatter = logging.Formatter(log_format)
-        console.setFormatter(formatter)
-        logger.addHandler(console)
+        logging.config.dictConfig(logging_config)
+
+        now = get_current_time()
 
         logger.info('-' * 80)
-        logger.info('Processing start at: %s', datetime.datetime.now(
-            pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
+        logger.info('Processing start at: %s',
+                    get_current_time().strftime(ISO_DATE_FORMAT))
 
         check_ltfile(self.lastfile)
 
-        end = now.strftime(UTC_DATE_FORMAT)
+        end = now.strftime(ISO_DATE_FORMAT)
         start = get_last_timestamp(self.lastfile)
         logger.info('Last time from file: %s', start)
 
         if not start:
             one_hour_ago = now - datetime.timedelta(hours=1)
-            start = one_hour_ago.strftime(UTC_DATE_FORMAT)
+            start = one_hour_ago.strftime(ISO_DATE_FORMAT)
 
         logger.info('Request start time: %s', start)
         logger.info('Request end time: %s', end)
@@ -430,8 +442,8 @@ class VaisalaApp(SingleInstance):
         buf = parse_data(response)
         process_csv(args.url, buf, dry=args.dry)
 
-        logger.info('Processing end at: %s', datetime.datetime.now(
-            pytz.timezone(TIME_ZONE)).strftime(UTC_DATE_FORMAT))
+        logger.info('Processing end at: %s',
+                    get_current_time().strftime(ISO_DATE_FORMAT))
         logger.info('-' * 80)
 
 
