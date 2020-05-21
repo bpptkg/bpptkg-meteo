@@ -21,7 +21,7 @@ script to the system crontab by 5 minutes or so. For example:
 
     python /path/to/app.py 'mysql://user:password@127.0.0.1/meteo'
 
-Add -v option to run the app in debugging mode.
+Add `-v` option to run the app in debugging mode.
 
 The script will create `last` file that store the latest meteorology data
 timestamp in `data/` directory. You can view runtime log in `logs/` directory.
