@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
+import argparse
+import glob
+import json
 import os
 import sys
-import json
-import argparse
 
 from sqlalchemy import create_engine
-from meteo.models import cr6, SCHEMAS
+
 from meteo.db.ops import bulk_insert
+from meteo.models import SCHEMAS, cr6
 
 
 def parse_args():
@@ -16,7 +18,18 @@ def parse_args():
     parser.add_argument('url', help='SQLAlchemy engine URL.')
     parser.add_argument('schema', help='SQLAlchemy schema name.')
     parser.add_argument('model', help='Schema model class name.')
-    parser.add_argument('json', help='Path to json file.')
+    parser.add_argument(
+        'path',
+        nargs='*',
+        default='',
+        help='Path to json buffer, file, or directory.'
+    )
+    parser.add_argument(
+        '-r',
+        '--recursive',
+        action='store_true',
+        help='Prosess json files recursively through directories.'
+    )
     return parser.parse_args()
 
 
@@ -28,8 +41,6 @@ def read_json_file(path):
 
 def main():
     args = parse_args()
-    if not os.path.exists(args.json):
-        sys.exit('JSON file {} is not exits.'.format(args.json))
 
     if args.schema not in SCHEMAS:
         sys.exit('Schema name {} is not supported.'.format(args.schema))
@@ -37,12 +48,43 @@ def main():
     if args.model not in SCHEMAS[args.schema]:
         sys.exit('Model class name {} is not supported.'.format(args.model))
 
+    default_pattern = '*.json'
     base_class = SCHEMAS[args.schema]['base']
     engine = create_engine(args.url)
     base_class.prepare(engine, reflect=True)
 
-    json_data = read_json_file(args.json)
-    bulk_insert(engine, SCHEMAS[args.schema][args.model], json_data)
+    for path in args.path:
+        if os.path.isdir(path):
+            path = os.path.join(path, default_pattern)
+            files = glob.glob(path, recursive=args.recursive)
+            files.sort()
+            for filepath in files:
+
+                print('Processing:', filepath)
+                json_data = read_json_file(filepath)
+
+                print('Inserting to database...')
+                bulk_insert(
+                    engine, SCHEMAS[args.schema][args.model], json_data)
+
+                print('Data inserted:', filepath)
+
+        elif os.path.isfile(path):
+            print('Processing:', path)
+            json_data = read_json_file(path)
+
+            print('Inserting to database...')
+            bulk_insert(engine, SCHEMAS[args.schema][args.model], json_data)
+
+            print('Data inserted:', path)
+        else:
+            sys.exit('No such file or directory:', path)
+
+    if not args.path:
+        lines = [line for line in sys.stdin]
+        buffers = ''.join(lines)
+        json_data = json.loads(buffers)
+        bulk_insert(engine, SCHEMAS[args.schema][args.model], json_data)
 
 
 if __name__ == '__main__':
