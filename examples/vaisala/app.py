@@ -199,6 +199,9 @@ def get_meteo_data(start, end):
     }
     base_url = 'http://192.168.9.47/'
     url = base_url + '?' + urlencode(params)
+
+    logger.debug('Meteorology data web service URL: %s', url)
+
     with urlopen(url) as url:
         response = url.read()
     return response
@@ -288,11 +291,12 @@ def check_ltfile(path):
     empty content.
     """
     if not os.path.exists(path):
-        logger.debug('LT_FILE is not exists. Creating LT_FILE...')
+        logger.debug(
+            'Last timestamp file (LT_FILE) is not exists. Creating LT_FILE...')
         with open(path, 'w+') as f:
             pass
     else:
-        logger.debug('LT_FILE already exists.')
+        logger.debug('Last timestamp file (LT_FILE) already exists.')
 
 
 def get_csv_from_queue(path):
@@ -431,6 +435,13 @@ class VaisalaApp(SingleInstance):
         logger.info('Processing start at: %s',
                     get_current_time().strftime(ISO_DATE_FORMAT))
 
+        logger.debug('App base directory: %s', BASE_DIR)
+        logger.debug('App cache directory: %s', CACHE_DIR)
+        logger.debug('App data directory: %s', DATA_DIR)
+        logger.debug('App log directory: %s', LOG_DIR)
+
+        logger.debug('Last timestamp file (LT_FILE): %s', self.lastfile)
+
         check_ltfile(self.lastfile)
 
         end = now.strftime(ISO_DATE_FORMAT)
@@ -438,6 +449,7 @@ class VaisalaApp(SingleInstance):
         logger.info('Last time from file: %s', start)
 
         if not start:
+            logger.info('Last timestamp will default to one hour ago.')
             one_hour_ago = now - datetime.timedelta(hours=1)
             start = one_hour_ago.strftime(ISO_DATE_FORMAT)
 
