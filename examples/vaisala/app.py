@@ -49,6 +49,22 @@ ISO_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 logger = logging.getLogger(__name__)
 
 
+def force_str(s, encoding='utf-8', errors='strict'):
+    """
+    Force string or bytes s to text string.
+    """
+    if issubclass(type(s), str):
+        return s
+    try:
+        if isinstance(s, bytes):
+            s = str(s, encoding, errors)
+        else:
+            s = str(s)
+    except UnicodeDecodeError as e:
+        raise e
+    return s
+
+
 def get_current_time():
     """
     Get time aware now.
@@ -232,7 +248,7 @@ def get_last_timestamp(path):
     """
     with open(path) as f:
         date_string = f.read()
-    return date_string
+    return date_string.rstrip()
 
 
 def parse_last_timestamp(df):
