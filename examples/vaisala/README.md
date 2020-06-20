@@ -19,9 +19,15 @@ See `create-schema` script in `bin/` directory.
 Just provide SQLAlchemy database engine URL to the script argument and add the
 script to the system crontab by 5 minutes or so. For example:
 
-    python /path/to/app.py 'mysql://user:password@127.0.0.1/meteo'
+    source /path/to/venv/bin/activate
+    python /path/to/vaisala/app.py 'mysql://user:password@127.0.0.1/meteo'
 
-Add `-v` option to run the app in debugging mode.
+where `/path/to/venv/` is your path to Python virtual enviroment. Add `-v`
+option to run the app in debugging mode.
+
+Do not forget to install all package requirements prior to running the script:
+
+    pip install -r /path/to/vaisala/requirements.txt
 
 The script will create `last` file that store the latest meteorology data
 timestamp in `data/` directory. You can view runtime log in `logs/` directory.
