@@ -11,6 +11,7 @@ from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
+import numpy as np
 import pandas as pd
 import pytz
 import sentry_sdk
@@ -354,8 +355,9 @@ def insert_to_db(url, entries):
 def process_csv(url, buf, **kwargs):
     df = read_csv(io.StringIO(buf), header=None, names=COLUMNS)
 
-    # Change NaN to None if any.
-    df = df.where(pd.notnull(df), None)
+    # Change non-number (except timestamp) to NaN if any.
+    df = df.where(pd.notnull(df), np.nan)
+    df.replace('NAN', np.nan, inplace=True)
 
     logger.info('Number of entries: %s', len(df))
 
