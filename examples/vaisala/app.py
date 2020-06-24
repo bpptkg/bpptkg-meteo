@@ -352,6 +352,19 @@ def insert_to_db(url, entries):
         return False
 
 
+def sanitize_nan(entries):
+    """
+    Convert NaN to None for item in entries.
+    """
+    return [
+        dict([
+            (key, value) if not pd.isna(value) else (key, None)
+            for key, value in item.items()
+        ])
+        for item in entries
+    ]
+
+
 def process_csv(url, buf, **kwargs):
     df = read_csv(io.StringIO(buf), header=None, names=COLUMNS)
 
@@ -368,7 +381,8 @@ def process_csv(url, buf, **kwargs):
 
     dry = kwargs.get('dry')
     if not dry:
-        ok = insert_to_db(url, df.to_dict(orient='records'))
+        entries = df.to_dict(orient='records')
+        ok = insert_to_db(url, sanitize_nan(entries))
         if ok:
             logger.info('Data successfully inserted to database.')
 
