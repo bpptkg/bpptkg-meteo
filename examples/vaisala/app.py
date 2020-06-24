@@ -13,6 +13,9 @@ from urllib.request import urlopen
 
 import pandas as pd
 import pytz
+import sentry_sdk
+from decouple import config
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -43,10 +46,24 @@ LOG_DIR = os.path.join(BASE_DIR, 'logs')
 LT_FILE = os.path.join(DATA_DIR, 'last')
 LOCKFILE = os.path.join(DATA_DIR, 'vaisala.lock')
 
+DEBUG = config('DEBUG', cast=bool, default=False)
+SENTRY_DSN = config('SENTRY_DSN', default='')
+DATABASE_ENGINE = config('DATABASE_ENGINE', default='')
+
 TIME_ZONE = 'Asia/Jakarta'
 ISO_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 logger = logging.getLogger(__name__)
+
+# Initialize sentry integrations.
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=[SqlalchemyIntegration(), ]
+)
+
+
+class VaisalaAppError(Exception):
+    pass
 
 
 def force_str(s, encoding='utf-8', errors='strict'):
@@ -143,8 +160,10 @@ class SingleInstance(object):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'url',
-        help='SQLAlchemy database engine URL '
+        '-e', '--engine-url',
+        dest='engine_url',
+        default='',
+        help='SQLAlchemy database engine URL to store meteorology data '
         'e.g. mysql://user:password@127.0.0.1/meteo'
     )
     parser.add_argument(
@@ -385,10 +404,13 @@ class VaisalaApp(SingleInstance):
     def run(self):
         args = parse_args()
 
-        if args.verbose:
+        db_engine_url = args.engine_url or DATABASE_ENGINE
+        if not db_engine_url:
+            raise VaisalaAppError('Database engine URL is not configured yet')
+
+        log_level = 'INFO'
+        if args.verbose or DEBUG:
             log_level = 'DEBUG'
-        else:
-            log_level = 'INFO'
 
         logging_config = {
             'version': 1,
@@ -443,6 +465,7 @@ class VaisalaApp(SingleInstance):
         logger.debug('App cache directory: %s', CACHE_DIR)
         logger.debug('App data directory: %s', DATA_DIR)
         logger.debug('App log directory: %s', LOG_DIR)
+        logger.debug('Sentry DSN: %s', SENTRY_DSN)
 
         logger.debug('Last timestamp file (LT_FILE): %s', self.lastfile)
 
@@ -472,7 +495,7 @@ class VaisalaApp(SingleInstance):
             sys.exit(1)
 
         buf = parse_data(response)
-        process_csv(args.url, buf, dry=args.dry)
+        process_csv(db_engine_url, buf, dry=args.dry)
 
         logger.info('Processing end at: %s',
                     get_current_time().strftime(ISO_DATE_FORMAT))
