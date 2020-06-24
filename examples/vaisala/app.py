@@ -334,6 +334,10 @@ def insert_to_db(url, entries):
 
 def process_csv(url, buf, **kwargs):
     df = read_csv(io.StringIO(buf), header=None, names=COLUMNS)
+
+    # Change NaN to None if any.
+    df = df.where(pd.notnull(df), None)
+
     logger.info('Number of entries: %s', len(df))
 
     logger.debug('First 10 records:')
