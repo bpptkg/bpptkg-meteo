@@ -17,6 +17,9 @@ documentation by running these commands:
     pip install -r requirements.txt
     sphinx-build -b html docs/ /path/to/build/
 
+You can also view online version at the following
+[link](https://bpptkg.gitlab.io/bpptkg-meteo/).
+
 ## Contributing
 
 See `CONTRIBUTING.md` to learn how to contribute to this project.
