@@ -1,4 +1,7 @@
 mysqlclient>=1.4.2
+pandas>=0.24.2
+python-decouple>=3.3
+sentry-sdk>=0.15.1
 sphinx_rtd_theme>=0.4.3
 sphinx>=2.0.1
 sqlalchemy>=1.2.16
