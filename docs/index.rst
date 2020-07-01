@@ -4,7 +4,7 @@ bpptkg-meteo
 
 **bpptkg-meteo** is a Python library that provides BPPTKG meteorology schema
 tables and related operations. Its usage typically be embedded into an
-application such as BPPTKG Monitoring API (BMA).
+applications such as BPPTKG Monitoring API (BMA) or any standalone applications.
 
 .. toctree::
     :maxdepth: 1
