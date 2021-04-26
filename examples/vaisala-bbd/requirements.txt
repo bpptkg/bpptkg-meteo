@@ -1,0 +1,5 @@
+bpptkg-meteo>=1.0.0
+mysqlclient>=1.4.2
+python-decouple>=3.3
+sentry-sdk>=0.15.1
+sqlalchemy>=1.2.16
