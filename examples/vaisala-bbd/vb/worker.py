@@ -1,5 +1,9 @@
+import logging
+
 from meteo.parser.fields import FIELDS_MAPPING
 from meteo.parser.vaisala import VaisalaParser
+
+logger = logging.getLogger(__name__)
 
 
 def process_lines(timestamp, lines):

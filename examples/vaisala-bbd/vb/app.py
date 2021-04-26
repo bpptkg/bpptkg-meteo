@@ -19,9 +19,12 @@ class App(SingleInstance):
         super().__init__(**kwargs)
 
     def run(self):
-
-        data = []
+        """
+        Run the app.
+        """
+        lines = []
         last_read = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
+
         while True:
             with telnetlib.Telnet(
                     host=settings.TELNET_HOST,
@@ -29,12 +32,16 @@ class App(SingleInstance):
                     timeout=settings.TELNET_CONNECT_TIMEOUT) as tn:
 
                 line = tn.read_until(b'\n')
-                data.append(line)
+                lines.append(line)
+
+                logger.debug('Data: %s', line)
 
                 now = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
                 if last_read + datetime.timedelta(seconds=60) < now:
-                    last_read = now
-                    lines = []
+                    logger.debug('Starting worker thread.')
                     worker = threading.Thread(
                         target=process_lines, args=(now, lines))
                     worker.start()
+
+                    lines = []
+                    last_read = now
