@@ -15,7 +15,8 @@ class Babadan(Base):
 
     air_temperature = Column('air_temperature', Float,
                              index=True, nullable=True)
-    air_humidity = Column('air_humidity', Float, index=True, nullable=True)
+    relative_humidity = Column(
+        'relative_humidity', Float, index=True, nullable=True)
     air_pressure = Column('air_pressure', Float, index=True, nullable=True)
     internal_temperature = Column(
         'internal_temperature', Float, index=True, nullable=True)
