@@ -13,18 +13,23 @@ def process_lines(timestamp, lines):
     """
     Process lines block associated with sampled data.
     """
-    data = {}
+
+    # Create entry container.
+    entry = dict([
+        (v['name'], None) for k, v in FIELDS_MAPPING.items()
+    ])
+
     parser = VaisalaParser()
     for line in lines:
         s = parser.parse(line)
         for comp in s['components']:
-            data[comp['name']] = comp['value']
+            entry[comp['name']] = comp['value']
 
-    data['timestamp'] = timestamp
+    entry['timestamp'] = timestamp
 
-    logger.debug('Payload to insert: %s', data)
+    logger.debug('Payload to insert: %s', entry)
     try:
-        bulk_insert(models.engine, models.Babadan, data)
+        bulk_insert(models.engine, models.Babadan, [entry, ])
         logger.debug('Insert to database succeed.')
     except Exception as e:
         # For now, if insert failed, just ignore the error.
