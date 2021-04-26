@@ -11,7 +11,8 @@ class Babadan(Base):
 
     __tablename__ = 'babadan'
 
-    timestamp = Column('timestamp', DateTime, primary_key=True, index=True)
+    timestamp = Column('timestamp', DateTime, primary_key=True,
+                       index=True, autoincrement=False)
 
     air_temperature = Column('air_temperature', Float,
                              index=True, nullable=True)
