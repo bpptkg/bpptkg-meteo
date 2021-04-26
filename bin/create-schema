@@ -4,12 +4,15 @@ import sys
 import argparse
 
 from sqlalchemy import create_engine
-from meteo.models import cr6
+from meteo.models import cr6, bbd
 
 SCHEMAS = {
     'cr6': {
         'base': cr6.Base,
-    }
+    },
+    'bbd': {
+        'base': bbd.Base,
+    },
 }
 
 
