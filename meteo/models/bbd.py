@@ -1,7 +1,6 @@
 from sqlalchemy import Column, DateTime, Float, String
-from sqlalchemy.ext.automap import automap_base
 
-Base = automap_base()
+from .base import Base
 
 
 class Babadan(Base):
