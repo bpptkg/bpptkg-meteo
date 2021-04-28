@@ -25,6 +25,11 @@ class App(SingleInstance):
         lines = []
         last_read = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
 
+        logger.info('Using telnet server on {host} port {port}'.format(
+            host=settings.TELNET_HOST,
+            port=settings.TELNET_PORT,
+        ))
+
         while True:
             with telnetlib.Telnet(
                     host=settings.TELNET_HOST,
