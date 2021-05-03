@@ -30,7 +30,7 @@ def process_lines(timestamp, lines):
     logger.debug('Payload to insert: %s', entry)
     try:
         bulk_insert(models.engine, models.Babadan, [entry, ])
-        logger.debug('Insert to database succeed.')
+        logger.info('Insert to database succeed.')
     except Exception as e:
         # For now, if insert failed, just ignore the error.
         logger.error('Database insert error.')

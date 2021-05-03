@@ -29,6 +29,7 @@ class App(SingleInstance):
             host=settings.TELNET_HOST,
             port=settings.TELNET_PORT,
         ))
+        logger.info('Last read timestamp: %s', last_read.isoformat())
 
         while True:
             with telnetlib.Telnet(
@@ -43,10 +44,12 @@ class App(SingleInstance):
 
                 now = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
                 if last_read + datetime.timedelta(seconds=60) < now:
-                    logger.debug('Starting worker thread.')
+                    logger.info('Starting worker thread.')
                     worker = threading.Thread(
                         target=process_lines, args=(now, lines))
                     worker.start()
 
                     lines = []
                     last_read = now
+                    logger.info('Last read timestamp: %s',
+                                last_read.isoformat())
