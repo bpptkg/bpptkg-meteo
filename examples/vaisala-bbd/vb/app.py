@@ -1,7 +1,7 @@
 import datetime
 import logging
 import telnetlib
-import threading
+import time
 
 import pytz
 
@@ -11,6 +11,8 @@ from . import settings
 from .worker import process_lines
 
 logger = logging.getLogger(__name__)
+
+TELNET_RECONNECT_TIMEOUT = 30
 
 
 class App(SingleInstance):
@@ -32,24 +34,31 @@ class App(SingleInstance):
         logger.info('Last read timestamp: %s', last_read.isoformat())
 
         while True:
-            with telnetlib.Telnet(
-                    host=settings.TELNET_HOST,
-                    port=settings.TELNET_PORT,
-                    timeout=settings.TELNET_CONNECT_TIMEOUT) as tn:
+            try:
+                with telnetlib.Telnet(
+                        host=settings.TELNET_HOST,
+                        port=settings.TELNET_PORT,
+                        timeout=settings.TELNET_CONNECT_TIMEOUT) as tn:
 
-                line = tn.read_until(b'\n')
-                lines.append(line)
+                    line = tn.read_until(b'\n')
+                    lines.append(line)
 
-                logger.debug('Data: %s', line)
+                    logger.debug('Data: %s', line)
 
-                now = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
-                if last_read + datetime.timedelta(seconds=60) < now:
-                    logger.info('Starting worker thread.')
-                    worker = threading.Thread(
-                        target=process_lines, args=(now, lines))
-                    worker.start()
+                    now = datetime.datetime.now(
+                        pytz.timezone(settings.TIMEZONE))
+                    if last_read + datetime.timedelta(seconds=60) < now:
+                        logger.info('Processing lines.')
+                        process_lines(now, lines)
 
-                    lines = []
-                    last_read = now
-                    logger.info('Last read timestamp: %s',
-                                last_read.isoformat())
+                        lines = []
+                        last_read = now
+                        logger.info('Last read timestamp: %s',
+                                    last_read.isoformat())
+            except (ConnectionError, OSError) as e:
+                logger.error(e)
+                logger.info('Reconnecting in {}s'.format(
+                    TELNET_RECONNECT_TIMEOUT))
+                time.sleep(TELNET_RECONNECT_TIMEOUT)
+            except Exception as e:
+                logger.error(e)
