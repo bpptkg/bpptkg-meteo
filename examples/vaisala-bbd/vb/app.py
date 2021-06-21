@@ -48,7 +48,6 @@ class App(SingleInstance):
                     now = datetime.datetime.now(
                         pytz.timezone(settings.TIMEZONE))
                     if last_read + datetime.timedelta(seconds=60) < now:
-                        logger.info('Processing lines.')
                         process_lines(now, lines)
 
                         lines = []

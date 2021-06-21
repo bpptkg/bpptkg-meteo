@@ -27,7 +27,7 @@ def process_lines(timestamp, lines):
 
     entry['timestamp'] = timestamp
 
-    logger.debug('Payload to insert: %s', entry)
+    logger.info('Payload to insert: %s', entry)
     try:
         bulk_insert(models.engine, models.Babadan, [entry, ])
         logger.info('Insert to database succeed.')
