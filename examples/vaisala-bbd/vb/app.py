@@ -25,7 +25,10 @@ class App(SingleInstance):
         Run the app.
         """
         lines = []
-        last_read = datetime.datetime.now(pytz.timezone(settings.TIMEZONE))
+        localtz = pytz.timezone(settings.TIMEZONE)
+
+        last_read = datetime.datetime.now(localtz)
+        last_heartbeat = datetime.datetime.now(localtz)
 
         logger.info('Using telnet server on {host} port {port}'.format(
             host=settings.TELNET_HOST,
@@ -45,8 +48,18 @@ class App(SingleInstance):
 
                     logger.debug('Data: %s', line)
 
-                    now = datetime.datetime.now(
-                        pytz.timezone(settings.TIMEZONE))
+                    now = datetime.datetime.now(localtz)
+
+                    if last_heartbeat + datetime.timedelta(seconds=30) < now:
+                        try:
+                            tn.write(b'b\n')
+                            logger.info('Heartbeat message sent')
+                        except Exception as e:
+                            logger.error(
+                                'Error when sending heartbeat message')
+                            logger.error(e)
+                        last_heartbeat = now
+
                     if last_read + datetime.timedelta(seconds=60) < now:
                         process_lines(now, lines)
 
