@@ -24,11 +24,6 @@ You can also view online version at the following
 
 See `CONTRIBUTING.md` to learn how to contribute to this project.
 
-## Support
-
-This project is maintained by Indra Rudianto. If you have any question about
-this project, you can contact him at <indrarudianto.official@gmail.com>.
-
 ## License
 
 By contributing to the project, you agree that your contributions will be
