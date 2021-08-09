@@ -1,5 +1,7 @@
 # bpptkg-meteo
 
+![GitHub Badge](https://github.com/bpptkg/bpptkg-meteo/workflows/Build/badge.svg)
+
 BPPTKG weather station data fetcher and schema tables library.
 
 ## Installation
