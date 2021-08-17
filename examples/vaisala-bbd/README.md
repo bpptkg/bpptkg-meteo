@@ -11,7 +11,7 @@ See `create-schema` script in the `bin/` directory.
 
 ## Deploying
 
-Clone the project from GitLab repository:
+Clone the project from GitHub repository:
 
     git clone https://github.com/bpptkg/bpptkg-meteo.git
 
