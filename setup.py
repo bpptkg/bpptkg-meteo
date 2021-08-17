@@ -20,8 +20,8 @@ setup(
     install_requires=[
         'sqlalchemy',
     ],
-    author='Indra Rudianto',
-    author_email='indrarudianto.official@gmail.com',
+    author='BPPTKG',
+    author_email='bpptkg@esdm.go.id',
     zip_safe=False,
     packages=find_packages(exclude=['docs', 'tests', 'examples']),
     classifiers=[

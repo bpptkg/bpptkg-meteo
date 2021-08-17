@@ -20,8 +20,8 @@ from meteo import __version__
 # -- Project information -----------------------------------------------------
 
 project = 'bpptkg-meteo'
-copyright = '{}, BPPTKG'.format(datetime.datetime.now().year)
-author = 'Indra Rudianto'
+copyright = '2020-{}, BPPTKG'.format(datetime.datetime.now().year)
+author = 'BPPTKG'
 release = __version__
 
 # -- General configuration ---------------------------------------------------

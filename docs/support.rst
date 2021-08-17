@@ -2,6 +2,6 @@
 Support
 =======
 
-This project is maintained by Indra Rudianto. If you have any question about
-this project, or you want to contribute to this project, you can contact him
-at <indrarudianto.official@gmail.com>.
+If you have any problem about this project, you can raise an `issue
+<https://github.com/bpptkg/bpptkg-meteo/issues>`_ on our `GitHub
+<https://github.com/bpptkg/bpptkg-meteo>`_ repository.

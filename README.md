@@ -27,5 +27,5 @@ See `CONTRIBUTING.md` to learn how to contribute to this project.
 
 By contributing to the project, you agree that your contributions will be
 licensed under its MIT license. See
-[LICENSE](https://gitlab.com/bpptkg/bpptkg-meteo/blob/master/LICENSE) for
+[LICENSE](https://github.com/bpptkg/bpptkg-meteo/blob/master/LICENSE) for
 details.

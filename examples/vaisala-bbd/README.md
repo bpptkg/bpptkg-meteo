@@ -13,7 +13,7 @@ See `create-schema` script in the `bin/` directory.
 
 Clone the project from GitLab repository:
 
-    git clone git@gitlab.com:bpptkg/bpptkg-meteo.git
+    git clone https://github.com/bpptkg/bpptkg-meteo.git
 
 Change directory to vaisala-bbd:
 
