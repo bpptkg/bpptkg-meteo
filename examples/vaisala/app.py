@@ -222,7 +222,7 @@ def get_meteo_data(start, end):
 
     logger.debug('Meteorology data web service URL: %s', url)
 
-    with urlopen(url) as url:
+    with urlopen(url, timeout=10) as url:
         response = url.read()
     return response
 
