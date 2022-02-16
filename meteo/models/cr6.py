@@ -50,7 +50,7 @@ class CR6(Base):
         Float,
         index=True,
         nullable=True,
-        comment='Rainfall in mm.')
+        comment='Rainfall counter value.')
     amount = Column(
         'amount',
         Float,
@@ -69,4 +69,4 @@ class CR6(Base):
         Float,
         index=True,
         nullable=True,
-        comment='Power temperature in degrees Celsius.')
+        comment='Panel temperature in degrees Celsius.')
