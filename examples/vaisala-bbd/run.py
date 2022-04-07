@@ -2,13 +2,9 @@
 
 import logging
 import logging.config
-import sys
-import time
 
 from vb import settings
 from vb.app import App
-
-from meteo.singleton import SingleInstanceException
 
 logger = logging.getLogger(__name__)
 

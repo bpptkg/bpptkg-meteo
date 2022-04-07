@@ -43,7 +43,7 @@ class App(SingleInstance):
                         port=settings.TELNET_PORT,
                         timeout=settings.TELNET_CONNECT_TIMEOUT) as tn:
 
-                    line = tn.read_until(b'\n')
+                    line = tn.read_until(b'\n', timeout=60)
                     lines.append(line)
 
                     logger.debug('Data: %s', line)
@@ -52,7 +52,7 @@ class App(SingleInstance):
 
                     if last_heartbeat + datetime.timedelta(seconds=30) < now:
                         try:
-                            tn.write(b'b\n')
+                            tn.write(b'\r\n')
                             logger.info('Heartbeat message sent')
                         except Exception as e:
                             logger.error(
