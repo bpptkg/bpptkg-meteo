@@ -19,6 +19,11 @@ documentation by running these commands:
     pip install -r requirements.txt
     sphinx-build -b html docs/ /path/to/build/
 
+## Linting
+
+Use black formatter to lint and fixes code files if you made changes to the
+scripts.
+
 ## Contributing
 
 See `CONTRIBUTING.md` to learn how to contribute to this project.
