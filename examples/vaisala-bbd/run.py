@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 def main():
     logging.config.dictConfig(settings.LOGGING)
 
-    logger.info('Initiating app...')
+    logger.info("Initiating app...")
     app = App(lockfile=settings.LOCKFILE)
     app.run()
 
-    logger.info('App exiting.')
+    logger.info("App exiting.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

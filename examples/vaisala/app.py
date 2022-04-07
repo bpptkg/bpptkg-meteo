@@ -22,43 +22,45 @@ from sqlalchemy.exc import SQLAlchemyError
 from meteo.db import sessions
 from meteo.models import cr6
 
-if sys.platform != 'win32':
+if sys.platform != "win32":
     import fcntl
 
 COLUMNS = [
-    'timestamp',
-    'record_id',
-    'wind_direction',
-    'wind_speed',
-    'air_temperature',
-    'air_humidity',
-    'air_pressure',
-    'rainfall',
-    'amount',
-    'battery_voltage',
-    'power_temperature',
+    "timestamp",
+    "record_id",
+    "wind_direction",
+    "wind_speed",
+    "air_temperature",
+    "air_humidity",
+    "air_pressure",
+    "rainfall",
+    "amount",
+    "battery_voltage",
+    "power_temperature",
 ]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-CACHE_DIR = os.path.join(BASE_DIR, 'cache')
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
-LT_FILE = os.path.join(DATA_DIR, 'last')
-LOCKFILE = os.path.join(DATA_DIR, 'vaisala.lock')
+DATA_DIR = os.path.join(BASE_DIR, "data")
+CACHE_DIR = os.path.join(BASE_DIR, "cache")
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+LT_FILE = os.path.join(DATA_DIR, "last")
+LOCKFILE = os.path.join(DATA_DIR, "vaisala.lock")
 
-DEBUG = config('DEBUG', cast=bool, default=False)
-SENTRY_DSN = config('SENTRY_DSN', default='')
-DATABASE_ENGINE = config('DATABASE_ENGINE', default='')
+DEBUG = config("DEBUG", cast=bool, default=False)
+SENTRY_DSN = config("SENTRY_DSN", default="")
+DATABASE_ENGINE = config("DATABASE_ENGINE", default="")
 
-TIME_ZONE = 'Asia/Jakarta'
-ISO_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+TIME_ZONE = "Asia/Jakarta"
+ISO_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 logger = logging.getLogger(__name__)
 
 # Initialize sentry integrations.
 sentry_sdk.init(
     dsn=SENTRY_DSN,
-    integrations=[SqlalchemyIntegration(), ]
+    integrations=[
+        SqlalchemyIntegration(),
+    ],
 )
 
 
@@ -66,7 +68,7 @@ class VaisalaAppError(Exception):
     pass
 
 
-def force_str(s, encoding='utf-8', errors='strict'):
+def force_str(s, encoding="utf-8", errors="strict"):
     """
     Force string or bytes s to text string.
     """
@@ -102,37 +104,40 @@ class SingleInstance(object):
     Reference: https://github.com/pycontribs/tendo/blob/master/tendo/singleton.py
     """
 
-    def __init__(self, flavor_id='', lockfile=''):
+    def __init__(self, flavor_id="", lockfile=""):
         self.initialized = False
         if lockfile:
             self.lockfile = lockfile
         else:
-            basename = os.path.splitext(os.path.abspath(sys.argv[0]))[0].replace(
-                "/", "-").replace(":", "").replace("\\", "-") + '-%s' % flavor_id + '.lock'
-            self.lockfile = os.path.normpath(
-                tempfile.gettempdir() + '/' + basename)
+            basename = (
+                os.path.splitext(os.path.abspath(sys.argv[0]))[0]
+                .replace("/", "-")
+                .replace(":", "")
+                .replace("\\", "-")
+                + "-%s" % flavor_id
+                + ".lock"
+            )
+            self.lockfile = os.path.normpath(tempfile.gettempdir() + "/" + basename)
 
-        logger.debug('SingleInstance lockfile: %s', self.lockfile)
-        if sys.platform == 'win32':
+        logger.debug("SingleInstance lockfile: %s", self.lockfile)
+        if sys.platform == "win32":
             try:
                 if os.path.exists(self.lockfile):
                     os.unlink(self.lockfile)
-                self.fd = os.open(self.lockfile, os.O_CREAT |
-                                  os.O_EXCL | os.O_RDWR)
+                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
             except OSError:
                 type, e, tb = sys.exc_info()
                 if os.errno == 13:
-                    logger.error(
-                        'Another instance is already running. Quitting.')
+                    logger.error("Another instance is already running. Quitting.")
                     raise SingleInstanceException()
                 raise
         else:
-            self.fp = open(self.lockfile, 'w')
+            self.fp = open(self.lockfile, "w")
             self.fp.flush()
             try:
                 fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except (IOError, BlockingIOError):
-                logger.error('Another instance is already running. Quitting.')
+                logger.error("Another instance is already running. Quitting.")
                 raise SingleInstanceException()
 
         self.initialized = True
@@ -141,8 +146,8 @@ class SingleInstance(object):
         if not self.initialized:
             return
         try:
-            if sys.platform == 'win32':
-                if hasattr(self, 'fd'):
+            if sys.platform == "win32":
+                if hasattr(self, "fd"):
                     os.close(self.fd)
                     os.unlink(self.lockfile)
             else:
@@ -153,40 +158,40 @@ class SingleInstance(object):
             if logger:
                 logger.error(e)
             else:
-                print('Unloggable error: %s', e)
+                print("Unloggable error: %s", e)
             sys.exit(1)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-e', '--engine-url',
-        dest='engine_url',
-        default='',
-        help='SQLAlchemy database engine URL to store meteorology data '
-        'e.g. mysql://user:password@127.0.0.1/meteo'
+        "-e",
+        "--engine-url",
+        dest="engine_url",
+        default="",
+        help="SQLAlchemy database engine URL to store meteorology data "
+        "e.g. mysql://user:password@127.0.0.1/meteo",
     )
     parser.add_argument(
-        '-d', '--dry',
-        action='store_true',
-        help='Do not insert data to database (dry run).'
+        "-d",
+        "--dry",
+        action="store_true",
+        help="Do not insert data to database (dry run).",
     )
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Run in debugging mode.'
+        "-v", "--verbose", action="store_true", help="Run in debugging mode."
     )
     return parser.parse_args()
 
 
 def decode_bytes(data):
     try:
-        return data.decode('utf-8')
+        return data.decode("utf-8")
     except (UnicodeDecodeError, AttributeError):
         return data
 
 
-def to_datetime(date_string, date_format=r'%Y-%m-%d %H:%M:%S'):
+def to_datetime(date_string, date_format=r"%Y-%m-%d %H:%M:%S"):
     date_obj = datetime.datetime.strptime(date_string, date_format)
     return date_obj
 
@@ -209,17 +214,17 @@ def get_meteo_data(start, end):
     (CSV data format) and using data range mode.
     """
     params = {
-        'command': 'DataQuery',
-        'uri': 'dl:Table1',
-        'format': 'toa5',
-        'mode': 'date-range',
-        'p1': start,
-        'p2': end
+        "command": "DataQuery",
+        "uri": "dl:Table1",
+        "format": "toa5",
+        "mode": "date-range",
+        "p1": start,
+        "p2": end,
     }
-    base_url = 'http://192.168.9.47/'
-    url = base_url + '?' + urlencode(params)
+    base_url = "http://192.168.9.47/"
+    url = base_url + "?" + urlencode(params)
 
-    logger.debug('Meteorology data web service URL: %s', url)
+    logger.debug("Meteorology data web service URL: %s", url)
 
     with urlopen(url, timeout=10) as url:
         response = url.read()
@@ -234,14 +239,14 @@ def parse_data(path):
     not, ignore the line.
     """
     try:
-        path_or_buffer = path.decode('utf-8')
+        path_or_buffer = path.decode("utf-8")
         buf = io.StringIO(path_or_buffer)
         lines = []
         while True:
             line = buf.readline()
             if not line:
                 break
-            date_string = line.split(',')[0].strip('"')
+            date_string = line.split(",")[0].strip('"')
             if is_valid_date(date_string):
                 lines.append(line)
     except (UnicodeDecodeError, AttributeError):
@@ -252,10 +257,10 @@ def parse_data(path):
                 line = buf.readline()
                 if not line:
                     break
-                date_string = line.split(',')[0].strip('"')
+                date_string = line.split(",")[0].strip('"')
                 if is_valid_date(date_string):
                     lines.append(line)
-    return ''.join(lines)
+    return "".join(lines)
 
 
 def read_csv(path, **kwargs):
@@ -283,7 +288,7 @@ def parse_last_timestamp(df):
     """
     if df.empty:
         return None
-    date_string = df['timestamp'].iloc[-1]
+    date_string = df["timestamp"].iloc[-1]
 
     # We add one minute forward to prevent data duplication at the edge.
     date_obj = to_datetime(date_string) + datetime.timedelta(minutes=1)
@@ -300,7 +305,7 @@ def get_last_timestamp_from_df(df):
 
 
 def write_last_timestamp(path, date_string):
-    with open(path, 'w+') as f:
+    with open(path, "w+") as f:
         f.write(date_string)
 
 
@@ -310,22 +315,21 @@ def check_ltfile(path):
     empty content.
     """
     if not os.path.exists(path):
-        logger.debug(
-            'Last timestamp file (LT_FILE) is not exists. Creating LT_FILE...')
-        with open(path, 'w+') as f:
+        logger.debug("Last timestamp file (LT_FILE) is not exists. Creating LT_FILE...")
+        with open(path, "w+") as f:
             pass
     else:
-        logger.debug('Last timestamp file (LT_FILE) already exists.')
+        logger.debug("Last timestamp file (LT_FILE) already exists.")
 
 
 def get_csv_from_queue(path):
-    with open(path, 'a+') as f:
+    with open(path, "a+") as f:
         data = f.read()
     return data
 
 
 def erase_file_content(path):
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         pass
 
 
@@ -356,10 +360,12 @@ def sanitize_nan(entries):
     Convert NaN to None for item in entries.
     """
     return [
-        dict([
-            (key, value) if not pd.isna(value) else (key, None)
-            for key, value in item.items()
-        ])
+        dict(
+            [
+                (key, value) if not pd.isna(value) else (key, None)
+                for key, value in item.items()
+            ]
+        )
         for item in entries
     ]
 
@@ -369,34 +375,37 @@ def process_csv(url, buf, **kwargs):
 
     # Change non-number (except timestamp) to NaN if any.
     df = df.where(pd.notnull(df), np.nan)
-    df.replace('NAN', np.nan, inplace=True)
+    df.replace("NAN", np.nan, inplace=True)
 
-    logger.info('Number of entries: %s', len(df))
+    logger.info("Number of entries: %s", len(df))
 
-    logger.debug('First 10 records:')
+    logger.debug("First 10 records:")
     logger.debug(df.head())
-    logger.debug('Last 10 records:')
+    logger.debug("Last 10 records:")
     logger.debug(df.tail())
 
-    dry = kwargs.get('dry')
+    dry = kwargs.get("dry")
     if not dry:
-        entries = df.to_dict(orient='records')
+        entries = df.to_dict(orient="records")
         ok = insert_to_db(url, sanitize_nan(entries))
         if ok:
-            logger.info('Data successfully inserted to database.')
+            logger.info("Data successfully inserted to database.")
 
             last = get_last_timestamp_from_df(df)
             if last is None:
                 return
 
-            logger.info('Last data timestamp (+1 minute from last timestamp '
-                        'in database): %s', last)
-            logger.info('Writing request end time to LT_FILE...')
+            logger.info(
+                "Last data timestamp (+1 minute from last timestamp "
+                "in database): %s",
+                last,
+            )
+            logger.info("Writing request end time to LT_FILE...")
             write_last_timestamp(LT_FILE, last)
         else:
-            logger.error('Data failed to be inserted to database.')
+            logger.error("Data failed to be inserted to database.")
     else:
-        logger.debug('Running in dry mode. Not inserting to database.')
+        logger.debug("Running in dry mode. Not inserting to database.")
 
 
 class VaisalaApp(SingleInstance):
@@ -408,7 +417,7 @@ class VaisalaApp(SingleInstance):
     process write a content to the lastfile.
     """
 
-    def __init__(self, lastfile='', **kwargs):
+    def __init__(self, lastfile="", **kwargs):
         if lastfile:
             self.lastfile = lastfile
         else:
@@ -421,84 +430,85 @@ class VaisalaApp(SingleInstance):
 
         db_engine_url = args.engine_url or DATABASE_ENGINE
         if not db_engine_url:
-            raise VaisalaAppError('Database engine URL is not configured yet')
+            raise VaisalaAppError("Database engine URL is not configured yet")
 
-        log_level = 'INFO'
+        log_level = "INFO"
         if args.verbose or DEBUG:
-            log_level = 'DEBUG'
+            log_level = "DEBUG"
 
         logging_config = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'default': {
-                    'format': '{asctime} {levelname} {name} {message}',
-                    'style': '{',
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "default": {
+                    "format": "{asctime} {levelname} {name} {message}",
+                    "style": "{",
                 },
-                'verbose': {
-                    'format': '{asctime} {levelname} {name} {message}',
-                    'style': '{',
-                },
-            },
-            'handlers': {
-                'console': {
-                    'level': log_level,
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'default'
-                },
-                'production': {
-                    'level': log_level,
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': os.path.join(LOG_DIR, 'vaisala.log'),
-                    'maxBytes': 1024 * 1024 * 5,
-                    'backupCount': 7,
-                    'formatter': 'verbose',
+                "verbose": {
+                    "format": "{asctime} {levelname} {name} {message}",
+                    "style": "{",
                 },
             },
-            'loggers': {
-                '': {
-                    'handlers': ['console', 'production'],
-                    'level': log_level,
+            "handlers": {
+                "console": {
+                    "level": log_level,
+                    "class": "logging.StreamHandler",
+                    "formatter": "default",
                 },
-                '__main__': {
-                    'handlers': ['console', 'production'],
-                    'level': log_level,
-                    'propagate': False,
-                }
-            }
+                "production": {
+                    "level": log_level,
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": os.path.join(LOG_DIR, "vaisala.log"),
+                    "maxBytes": 1024 * 1024 * 5,
+                    "backupCount": 7,
+                    "formatter": "verbose",
+                },
+            },
+            "loggers": {
+                "": {
+                    "handlers": ["console", "production"],
+                    "level": log_level,
+                },
+                "__main__": {
+                    "handlers": ["console", "production"],
+                    "level": log_level,
+                    "propagate": False,
+                },
+            },
         }
 
         logging.config.dictConfig(logging_config)
 
         now = get_current_time()
 
-        logger.info('-' * 80)
-        logger.info('Processing start at: %s',
-                    get_current_time().strftime(ISO_DATE_FORMAT))
+        logger.info("-" * 80)
+        logger.info(
+            "Processing start at: %s", get_current_time().strftime(ISO_DATE_FORMAT)
+        )
 
-        logger.debug('App base directory: %s', BASE_DIR)
-        logger.debug('App cache directory: %s', CACHE_DIR)
-        logger.debug('App data directory: %s', DATA_DIR)
-        logger.debug('App log directory: %s', LOG_DIR)
-        logger.debug('Sentry DSN: %s', SENTRY_DSN)
+        logger.debug("App base directory: %s", BASE_DIR)
+        logger.debug("App cache directory: %s", CACHE_DIR)
+        logger.debug("App data directory: %s", DATA_DIR)
+        logger.debug("App log directory: %s", LOG_DIR)
+        logger.debug("Sentry DSN: %s", SENTRY_DSN)
 
-        logger.debug('Last timestamp file (LT_FILE): %s', self.lastfile)
+        logger.debug("Last timestamp file (LT_FILE): %s", self.lastfile)
 
         check_ltfile(self.lastfile)
 
         end = now.strftime(ISO_DATE_FORMAT)
         start = get_last_timestamp(self.lastfile)
-        logger.info('Last time from file: %s', start)
+        logger.info("Last time from file: %s", start)
 
         if not start:
-            logger.info('Last timestamp will default to one hour ago.')
+            logger.info("Last timestamp will default to one hour ago.")
             one_hour_ago = now - datetime.timedelta(hours=1)
             start = one_hour_ago.strftime(ISO_DATE_FORMAT)
 
-        logger.info('Request start time: %s', start)
-        logger.info('Request end time: %s', end)
+        logger.info("Request start time: %s", start)
+        logger.info("Request end time: %s", end)
 
-        logger.info('Requesting meteo data from web service...')
+        logger.info("Requesting meteo data from web service...")
         try:
             response = get_meteo_data(start, end)
         except URLError as e:
@@ -506,18 +516,19 @@ class VaisalaApp(SingleInstance):
             sys.exit(1)
 
         if not response:
-            logger.info('Response is empty. Skipping...')
+            logger.info("Response is empty. Skipping...")
             sys.exit(1)
 
         buf = parse_data(response)
         process_csv(db_engine_url, buf, dry=args.dry)
 
-        logger.info('Processing end at: %s',
-                    get_current_time().strftime(ISO_DATE_FORMAT))
-        logger.info('-' * 80)
+        logger.info(
+            "Processing end at: %s", get_current_time().strftime(ISO_DATE_FORMAT)
+        )
+        logger.info("-" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         app = VaisalaApp(lastfile=LT_FILE, lockfile=LOCKFILE)
         app.run()

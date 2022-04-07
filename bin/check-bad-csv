@@ -16,68 +16,67 @@ def parse_args():
     Parse script arguments.
     """
     parser = argparse.ArgumentParser(
-        'Check for bad CSV format. File with bad format has status True. '
-        'Otherwise, file with good format has status False.')
+        "Check for bad CSV format. File with bad format has status True. "
+        "Otherwise, file with good format has status False."
+    )
 
     parser.add_argument(
-        'path',
-        nargs='*',
-        default='',
-        help='Full path to CSV buffer, file or directory.'
+        "path",
+        nargs="*",
+        default="",
+        help="Full path to CSV buffer, file or directory.",
     )
     parser.add_argument(
-        '-n',
-        '--numcol',
+        "-n",
+        "--numcol",
         type=int,
-        help='Number of column per row. If not provided, the script will '
-        'automatically determine the number using the first row.'
+        help="Number of column per row. If not provided, the script will "
+        "automatically determine the number using the first row.",
     )
     parser.add_argument(
-        '-d',
-        '--delimiter',
-        default=',',
-        help='CSV delimiter. Default to comma.'
+        "-d", "--delimiter", default=",", help="CSV delimiter. Default to comma."
     )
     parser.add_argument(
-        '-c',
-        '--comment',
-        default='#',
-        help='CSV comment identifier. Line that start with '
-        'comment will not be checked. Default to #.'
+        "-c",
+        "--comment",
+        default="#",
+        help="CSV comment identifier. Line that start with "
+        "comment will not be checked. Default to #.",
     )
     parser.add_argument(
-        '-r',
-        '--recursive',
-        action='store_true',
-        help='Check CSV files recursively through directories.'
+        "-r",
+        "--recursive",
+        action="store_true",
+        help="Check CSV files recursively through directories.",
     )
     parser.add_argument(
-        '-b',
-        '--bad',
-        action='store_true',
-        help='Print only files that have bad format.'
+        "-b",
+        "--bad",
+        action="store_true",
+        help="Print only files that have bad format.",
     )
     parser.add_argument(
-        '-g',
-        '--good',
-        action='store_true',
-        help='Print only files that have good format.'
+        "-g",
+        "--good",
+        action="store_true",
+        help="Print only files that have good format.",
     )
     return parser.parse_args()
 
 
 def decode_bytes(data):
     try:
-        return data.decode('utf-8')
+        return data.decode("utf-8")
     except (UnicodeDecodeError, AttributeError):
         return data
 
 
-def count_num_columns(line, delimiter=','):
+def count_num_columns(line, delimiter=","):
     if not line:
         raise CSVError(
-            'Cannot determine the number of columns using empty line string.'
-            'Make sure you have valid CSV data.')
+            "Cannot determine the number of columns using empty line string."
+            "Make sure you have valid CSV data."
+        )
     return len(line.split(delimiter))
 
 
@@ -85,11 +84,11 @@ def contains_bad_format(path, num_cols, **kwargs):
     """
     Check if path or buffer contains bad format by comparing number of columns.
     """
-    comment = kwargs.get('comment', '#')
-    delimiter = kwargs.get('delimiter', ',')
+    comment = kwargs.get("comment", "#")
+    delimiter = kwargs.get("delimiter", ",")
 
     try:
-        path_or_buffer = path.decode('utf-8')
+        path_or_buffer = path.decode("utf-8")
         buf = io.StringIO(path_or_buffer)
         while True:
             line = buf.readline()
@@ -101,14 +100,13 @@ def contains_bad_format(path, num_cols, **kwargs):
                     return True
     except (UnicodeDecodeError, AttributeError):
         path_or_buffer = path
-        with open(path_or_buffer, 'r') as buf:
+        with open(path_or_buffer, "r") as buf:
             while True:
                 line = buf.readline()
                 if not line:
                     break
                 if not line.startswith(comment):
-                    num_cols_in_line = count_num_columns(
-                        line, delimiter=delimiter)
+                    num_cols_in_line = count_num_columns(line, delimiter=delimiter)
                     if num_cols_in_line != num_cols:
                         return True
     return False
@@ -119,27 +117,25 @@ def read_the_first_line(path):
     Read the first line of path or buffer.
     """
     try:
-        path_or_buffer = path.decode('utf-8')
+        path_or_buffer = path.decode("utf-8")
         buf = io.StringIO(path_or_buffer)
         return buf.readline()
     except (UnicodeDecodeError, AttributeError):
         path_or_buffer = path
-        with open(path_or_buffer, 'r') as buf:
+        with open(path_or_buffer, "r") as buf:
             return buf.readline()
 
 
-def process_file(path, num_cols=None, delimiter=',', comment=','):
+def process_file(path, num_cols=None, delimiter=",", comment=","):
     """
     Process file or buffer. Returns True if file path or buffer has bad format.
     Otherwise, returns False.
     """
     line = read_the_first_line(path)
-    expected_num_cols = num_cols or count_num_columns(
-        line, delimiter=delimiter)
-    return contains_bad_format(path,
-                               expected_num_cols,
-                               delimiter=delimiter,
-                               comment=comment)
+    expected_num_cols = num_cols or count_num_columns(line, delimiter=delimiter)
+    return contains_bad_format(
+        path, expected_num_cols, delimiter=delimiter, comment=comment
+    )
 
 
 def print_status(bad, good, path, status):
@@ -157,7 +153,7 @@ def print_status(bad, good, path, status):
 
 def main():
     args = parse_args()
-    default_pattern = '*.csv'
+    default_pattern = "*.csv"
 
     for path in args.path:
         if os.path.isdir(path):
@@ -165,27 +161,30 @@ def main():
             files = glob.glob(path, recursive=args.recursive)
             files.sort()
             for filename in files:
-                status = process_file(filename,
-                                      num_cols=args.numcol,
-                                      delimiter=args.delimiter,
-                                      comment=args.comment)
+                status = process_file(
+                    filename,
+                    num_cols=args.numcol,
+                    delimiter=args.delimiter,
+                    comment=args.comment,
+                )
                 print_status(args.bad, args.good, filename, status)
         elif os.path.isfile(path):
-            status = process_file(path,
-                                  num_cols=args.numcol,
-                                  delimiter=args.delimiter,
-                                  comment=args.comment)
+            status = process_file(
+                path,
+                num_cols=args.numcol,
+                delimiter=args.delimiter,
+                comment=args.comment,
+            )
             print_status(args.bad, args.good, path, status)
 
     if not args.path:
-        lines = [line.encode('utf-8') for line in sys.stdin]
-        buf = b''.join(lines)
-        status = process_file(buf,
-                              num_cols=args.numcol,
-                              delimiter=args.delimiter,
-                              comment=args.comment)
+        lines = [line.encode("utf-8") for line in sys.stdin]
+        buf = b"".join(lines)
+        status = process_file(
+            buf, num_cols=args.numcol, delimiter=args.delimiter, comment=args.comment
+        )
         print(status)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

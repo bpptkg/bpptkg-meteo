@@ -3,12 +3,12 @@ def decode_string(s):
     Decode bytes s to string. Return original if decode failed.
     """
     try:
-        return s.decode('utf-8')
+        return s.decode("utf-8")
     except (UnicodeDecodeError, AttributeError):
         return s
 
 
-def force_text(s, encoding='utf-8', errors='strict'):
+def force_text(s, encoding="utf-8", errors="strict"):
     """
     Force string or bytes s to text string.
     """

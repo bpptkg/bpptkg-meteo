@@ -7,32 +7,32 @@ from sqlalchemy import create_engine
 from meteo.models import cr6, bbd
 
 SCHEMAS = {
-    'cr6': {
-        'base': cr6.Base,
+    "cr6": {
+        "base": cr6.Base,
     },
-    'bbd': {
-        'base': bbd.Base,
+    "bbd": {
+        "base": bbd.Base,
     },
 }
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('url', help='SQLAlchemy engine url.')
-    parser.add_argument('model', help='Model name to create.')
+    parser.add_argument("url", help="SQLAlchemy engine url.")
+    parser.add_argument("model", help="Model name to create.")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     if args.model not in SCHEMAS:
-        sys.exit('Model name {} is not supported.'.format(args.model))
+        sys.exit("Model name {} is not supported.".format(args.model))
 
-    base_class = SCHEMAS[args.model]['base']
+    base_class = SCHEMAS[args.model]["base"]
     engine = create_engine(args.url)
     base_class.prepare(engine, reflect=True)
     base_class.metadata.create_all(engine)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

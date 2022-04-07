@@ -10,45 +10,36 @@ import pandas as pd
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Convert CSV to JSON format.')
+    parser = argparse.ArgumentParser(description="Convert CSV to JSON format.")
     parser.add_argument(
-        'path',
-        nargs='*',
-        default='',
-        help='Path to CSV buffer, file, or directory.'
+        "path", nargs="*", default="", help="Path to CSV buffer, file, or directory."
     )
     parser.add_argument(
-        '-r',
-        '--recursive',
-        action='store_true',
-        help='Convert CSV files recursively through directories.'
+        "-r",
+        "--recursive",
+        action="store_true",
+        help="Convert CSV files recursively through directories.",
     )
     parser.add_argument(
-        '-d',
-        '--delimiter',
-        default=',',
-        help='CSV delimiter. Default to comma.'
+        "-d", "--delimiter", default=",", help="CSV delimiter. Default to comma."
     )
     parser.add_argument(
-        '-p',
-        '--replace',
-        help='Replace certain column names using comma separated value pairs. '
-        'Format follows old,new column convention. '
-        'Multiple entries can be separated using semi-colon. '
-        'For example, "a,b;c,d".'
+        "-p",
+        "--replace",
+        help="Replace certain column names using comma separated value pairs. "
+        "Format follows old,new column convention. "
+        "Multiple entries can be separated using semi-colon. "
+        'For example, "a,b;c,d".',
     )
     parser.add_argument(
-        '-o',
-        '--output',
-        default='',
-        help='Output file path or directory.'
+        "-o", "--output", default="", help="Output file path or directory."
     )
     return parser.parse_args()
 
 
 def rename_csv_to_json(path, parent=None, filename=None):
     if not parent:
-        parent_path = ''
+        parent_path = ""
     else:
         parent_path = parent
 
@@ -61,24 +52,24 @@ def rename_csv_to_json(path, parent=None, filename=None):
     base = os.path.splitext(name)[0]
     if filename:
         return os.path.join(base, filename)
-    return os.path.join(basepath, base + '.json')
+    return os.path.join(basepath, base + ".json")
 
 
 def build_headers_list(names):
-    return names.split(',')
+    return names.split(",")
 
 
 def build_headers_dict(names):
     columns = []
-    entries = names.split(';')
+    entries = names.split(";")
     for entry in entries:
-        columns.append(tuple(entry.split(',')))
+        columns.append(tuple(entry.split(",")))
     return dict(columns)
 
 
 def main():
     args = parse_args()
-    default_pattern = '*.csv'
+    default_pattern = "*.csv"
 
     for path in args.path:
         if os.path.isdir(path):
@@ -86,26 +77,24 @@ def main():
             files = glob.glob(path, recursive=args.recursive)
             files.sort()
             for filepath in files:
-                print('Processing:', filepath)
+                print("Processing:", filepath)
                 df = pd.read_csv(filepath, header=0, delimiter=args.delimiter)
                 if args.replace:
-                    df.rename(columns=build_headers_dict(args.replace),
-                              inplace=True)
+                    df.rename(columns=build_headers_dict(args.replace), inplace=True)
 
                 if os.path.isdir(args.output):
                     output = rename_csv_to_json(filepath, parent=args.output)
                 else:
                     output = rename_csv_to_json(filepath)
 
-                df.to_json(output, orient='records')
-                print('Saved:', output)
+                df.to_json(output, orient="records")
+                print("Saved:", output)
 
         elif os.path.isfile(path):
-            print('Processing:', path)
+            print("Processing:", path)
             df = pd.read_csv(path, header=0, delimiter=args.delimiter)
             if args.replace:
-                df.rename(columns=build_headers_dict(args.replace),
-                          inplace=True)
+                df.rename(columns=build_headers_dict(args.replace), inplace=True)
 
             if os.path.isdir(args.output):
                 output = rename_csv_to_json(path, parent=args.output)
@@ -114,19 +103,19 @@ def main():
             else:
                 output = rename_csv_to_json(path)
 
-            df.to_json(output, orient='records')
-            print('Saved:', output)
+            df.to_json(output, orient="records")
+            print("Saved:", output)
         else:
-            sys.exit('No such file or directory:', path)
+            sys.exit("No such file or directory:", path)
 
     if not args.path:
         lines = [line for line in sys.stdin]
-        buffers = ''.join(lines)
+        buffers = "".join(lines)
         df = pd.read_csv(io.StringIO(buffers), header=0)
         if args.replace:
             df.rename(columns=build_headers_dict(args.replace), inplace=True)
-        df.to_json(sys.stdout, orient='records')
+        df.to_json(sys.stdout, orient="records")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

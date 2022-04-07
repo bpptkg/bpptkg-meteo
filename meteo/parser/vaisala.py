@@ -16,7 +16,7 @@ class VaisalaParser(object):
     Class to parse data from Vaisala weather device.
     """
 
-    def __init__(self, delimiter=',', encoding='utf-8', errors='strict'):
+    def __init__(self, delimiter=",", encoding="utf-8", errors="strict"):
         self.delimiter = delimiter
         self.encoding = encoding
         self.errors = errors
@@ -26,40 +26,40 @@ class VaisalaParser(object):
         Parse field value.
         """
         pattern = re.compile(
-            r'''
+            r"""
                 (?P<field>\w+)
                 =
                 (?P<value>\d*[.,]?\d*)
                 (?P<unit>\w+)
-            ''',
+            """,
             re.X,
         )
 
         m = pattern.match(s)
         if m is not None:
             components = m.groupdict()
-            field = components['field']
-            if field == 'Id':
-                value = components['unit']
+            field = components["field"]
+            if field == "Id":
+                value = components["unit"]
                 unit = None
             else:
-                if components['value']:
+                if components["value"]:
                     try:
-                        converter = FIELDS_MAPPING[field]['type']
-                        value = converter(components['value'])
+                        converter = FIELDS_MAPPING[field]["type"]
+                        value = converter(components["value"])
                     except Exception:
                         value = None
                 else:
                     value = None
 
-                unit = components['unit']
+                unit = components["unit"]
 
             parsed_value = {
-                'text': s,
-                'field': field,
-                'name': FIELDS_MAPPING[field]['name'],
-                'value': value,
-                'unit': unit,
+                "text": s,
+                "field": field,
+                "name": FIELDS_MAPPING[field]["name"],
+                "value": value,
+                "unit": unit,
             }
         else:
             parsed_value = {}
@@ -79,4 +79,4 @@ class VaisalaParser(object):
             if value:
                 parsed_value.append(value)
 
-        return {'ident': ident, 'components': parsed_value}
+        return {"ident": ident, "components": parsed_value}

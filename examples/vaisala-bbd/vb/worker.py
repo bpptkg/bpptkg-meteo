@@ -15,23 +15,27 @@ def process_lines(timestamp, lines):
     """
 
     # Create entry container.
-    entry = dict([
-        (v['name'], None) for k, v in FIELDS_MAPPING.items()
-    ])
+    entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])
 
     parser = VaisalaParser()
     for line in lines:
         s = parser.parse(line)
-        for comp in s['components']:
-            entry[comp['name']] = comp['value']
+        for comp in s["components"]:
+            entry[comp["name"]] = comp["value"]
 
-    entry['timestamp'] = timestamp
+    entry["timestamp"] = timestamp
 
-    logger.info('Payload to insert: %s', entry)
+    logger.info("Payload to insert: %s", entry)
     try:
-        bulk_insert(models.engine, models.Babadan, [entry, ])
-        logger.info('Insert to database succeed.')
+        bulk_insert(
+            models.engine,
+            models.Babadan,
+            [
+                entry,
+            ],
+        )
+        logger.info("Insert to database succeed.")
     except Exception as e:
         # For now, if insert failed, just ignore the error.
-        logger.error('Database insert error.')
+        logger.error("Database insert error.")
         logger.error(e)

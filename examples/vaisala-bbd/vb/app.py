@@ -16,7 +16,6 @@ TELNET_RECONNECT_TIMEOUT = 30
 
 
 class App(SingleInstance):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -30,33 +29,35 @@ class App(SingleInstance):
         last_read = datetime.datetime.now(localtz)
         last_heartbeat = datetime.datetime.now(localtz)
 
-        logger.info('Using telnet server on {host} port {port}'.format(
-            host=settings.TELNET_HOST,
-            port=settings.TELNET_PORT,
-        ))
-        logger.info('Last read timestamp: %s', last_read.isoformat())
+        logger.info(
+            "Using telnet server on {host} port {port}".format(
+                host=settings.TELNET_HOST,
+                port=settings.TELNET_PORT,
+            )
+        )
+        logger.info("Last read timestamp: %s", last_read.isoformat())
 
         while True:
             try:
                 with telnetlib.Telnet(
-                        host=settings.TELNET_HOST,
-                        port=settings.TELNET_PORT,
-                        timeout=settings.TELNET_CONNECT_TIMEOUT) as tn:
+                    host=settings.TELNET_HOST,
+                    port=settings.TELNET_PORT,
+                    timeout=settings.TELNET_CONNECT_TIMEOUT,
+                ) as tn:
 
-                    line = tn.read_until(b'\n', timeout=60)
+                    line = tn.read_until(b"\n", timeout=60)
                     lines.append(line)
 
-                    logger.debug('Data: %s', line)
+                    logger.debug("Data: %s", line)
 
                     now = datetime.datetime.now(localtz)
 
                     if last_heartbeat + datetime.timedelta(seconds=30) < now:
                         try:
-                            tn.write(b'\r\n')
-                            logger.info('Heartbeat message sent')
+                            tn.write(b"\r\n")
+                            logger.info("Heartbeat message sent")
                         except Exception as e:
-                            logger.error(
-                                'Error when sending heartbeat message')
+                            logger.error("Error when sending heartbeat message")
                             logger.error(e)
                         last_heartbeat = now
 
@@ -65,12 +66,10 @@ class App(SingleInstance):
 
                         lines = []
                         last_read = now
-                        logger.info('Last read timestamp: %s',
-                                    last_read.isoformat())
+                        logger.info("Last read timestamp: %s", last_read.isoformat())
             except (ConnectionError, OSError) as e:
                 logger.error(e)
-                logger.info('Reconnecting in {}s'.format(
-                    TELNET_RECONNECT_TIMEOUT))
+                logger.info("Reconnecting in {}s".format(TELNET_RECONNECT_TIMEOUT))
                 time.sleep(TELNET_RECONNECT_TIMEOUT)
             except Exception as e:
                 logger.error(e)
