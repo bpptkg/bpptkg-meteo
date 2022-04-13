@@ -1,7 +1,6 @@
 import os
 import random
 import socket
-import threading
 import time
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
