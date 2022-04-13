@@ -21,6 +21,8 @@ def process_lines(timestamp, lines):
     for line in lines:
         s = parser.parse(line)
         for comp in s["components"]:
+            # Get only the latest value for each field by replacing the value if
+            # number of each field captured is more than one.
             entry[comp["name"]] = comp["value"]
 
     entry["timestamp"] = timestamp
