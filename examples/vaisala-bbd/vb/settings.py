@@ -1,5 +1,5 @@
+import enum
 import os
-import sys
 
 import sentry_sdk
 from decouple import config
@@ -16,6 +16,8 @@ DATABASE_ENGINE = config("DATABASE_ENGINE")
 MIGRATED = config("MIGRATED", default=True, cast=bool)
 TELNET_HOST = config("TELNET_HOST", default="localhost")
 TELNET_PORT = config("TELNET_PORT", default=23, cast=int)
+TELNET_JURANGJERO_HOST = config("TELNET_JURANGJERO_HOST", default="localhost")
+TELNET_JURANGJERO_PORT = config("TELNET_JURANGJERO_PORT", default=23, cast=int)
 TELNET_TIMEOUT = config("TELNET_TIMEOUT", default=300, cast=int)
 TELNET_CONNECT_TIMEOUT = config("TELNET_CONNECT_TIMEOUT", default=60, cast=int)
 TELNET_RECONNECT_LIMIT = config("TELNET_RECONNECT_LIMIT", default=10, cast=int)
@@ -76,3 +78,17 @@ sentry_sdk.init(
 )
 
 LOCKFILE = os.path.join(RUN_DIR, "vb.lock")
+
+
+class Station(enum.Enum):
+    """
+    List of supported station names.
+    """
+
+    BABADAN = "babadan"
+    JURANGJERO = "jurangjero"
+
+    CHOICES = [
+        BABADAN,
+        JURANGJERO,
+    ]

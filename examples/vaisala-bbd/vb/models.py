@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
-from meteo.models.bbd import Base, Babadan
+from meteo.models.base import Base  # noqa
+from meteo.models.bbd import Babadan  # noqa
+from meteo.models.jro import JurangJero  # noqa
 
 from . import settings
 

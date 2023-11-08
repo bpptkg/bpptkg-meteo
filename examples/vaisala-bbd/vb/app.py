@@ -16,8 +16,12 @@ TELNET_RECONNECT_TIMEOUT = 30
 
 
 class App(SingleInstance):
-    def __init__(self, **kwargs):
+    def __init__(self, station="babadan", **kwargs):
         super().__init__(**kwargs)
+
+        if station not in settings.Station.CHOICES.value:
+            raise ValueError("Unsupported station name: {}".format(station))
+        self.station = station
 
     def run(self):
         """
@@ -37,14 +41,20 @@ class App(SingleInstance):
         )
         logger.info("Last read timestamp: %s", last_read.isoformat())
 
+        if self.station == settings.Station.BABADAN.value:
+            host = settings.TELNET_HOST
+            port = settings.TELNET_PORT
+        elif self.station == settings.Station.JURANGJERO.value:
+            host = settings.TELNET_JURANGJERO_HOST
+            port = settings.TELNET_JURANGJERO_PORT
+
         while True:
             try:
                 with telnetlib.Telnet(
-                    host=settings.TELNET_HOST,
-                    port=settings.TELNET_PORT,
+                    host=host,
+                    port=port,
                     timeout=settings.TELNET_CONNECT_TIMEOUT,
                 ) as tn:
-
                     line = tn.read_until(b"\n", timeout=60)
                     lines.append(line)
 
@@ -62,7 +72,7 @@ class App(SingleInstance):
                         last_heartbeat = now
 
                     if last_read + datetime.timedelta(seconds=60) < now:
-                        process_lines(now, lines)
+                        process_lines(now, lines, self.station)
 
                         lines = []
                         last_read = now

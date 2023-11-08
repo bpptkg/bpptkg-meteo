@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 def main():
     """
-    Run Vaisala Babadan acquisition.
+    Run Vaisala Jurang Jero acquisition.
     """
-    logging.config.dictConfig(create_log_config("babadan.log"))
+    logging.config.dictConfig(create_log_config("jurangjero.log"))
 
     logger.info("Initiating app...")
-    lockfile = os.path.join(settings.RUN_DIR, "babadan.lock")
-    app = App(lockfile=lockfile, station=settings.Station.BABADAN.value)
+    lockfile = os.path.join(settings.RUN_DIR, "jurangjero.lock")
+    app = App(lockfile=lockfile, station=settings.Station.JURANGJERO.value)
     app.run()
 
     logger.info("App exiting.")
