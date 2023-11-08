@@ -33,20 +33,17 @@ class App(SingleInstance):
         last_read = datetime.datetime.now(localtz)
         last_heartbeat = datetime.datetime.now(localtz)
 
-        logger.info(
-            "Using telnet server on {host} port {port}".format(
-                host=settings.TELNET_HOST,
-                port=settings.TELNET_PORT,
-            )
-        )
-        logger.info("Last read timestamp: %s", last_read.isoformat())
-
         if self.station == settings.Station.BABADAN.value:
             host = settings.TELNET_HOST
             port = settings.TELNET_PORT
         elif self.station == settings.Station.JURANGJERO.value:
             host = settings.TELNET_JURANGJERO_HOST
             port = settings.TELNET_JURANGJERO_PORT
+
+        logger.info(
+            "Using telnet server on {host} port {port}".format(host=host, port=port)
+        )
+        logger.info("Last read timestamp: %s", last_read.isoformat())
 
         while True:
             try:
