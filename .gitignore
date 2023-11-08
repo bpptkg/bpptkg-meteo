@@ -10,3 +10,5 @@ venv3/
 docs/_build/
 dist/
 __pycache__/
+.DS_Store
+TODO
