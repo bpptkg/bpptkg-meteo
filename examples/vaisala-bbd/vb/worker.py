@@ -14,10 +14,14 @@ def process_lines(timestamp, lines, station):
     """
     Process lines block associated with sampled data.
     """
-    if station == Station.JURANGJERO.value:
+    if station == Station.LABUHAN.value:
+        model = models.Labuhan
+    elif station == Station.JURANGJERO.value:
         model = models.JurangJero
     elif station == Station.BABADAN.value:
         model = models.Babadan
+    elif station == Station.KLATAKAN.value:
+        model = models.Klatakan
 
     # Create entry container.
     entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])

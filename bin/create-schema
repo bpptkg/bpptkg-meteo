@@ -5,7 +5,7 @@ import sys
 
 from sqlalchemy import create_engine
 
-from meteo.models import bbd, cr6, jro
+from meteo.models import bbd, cr6, jro, lbh, kla
 
 SCHEMAS = {
     "cr6": {
@@ -16,6 +16,12 @@ SCHEMAS = {
     },
     "jro": {
         "base": jro.Base,
+    },
+    "lbh": {
+        "base": lbh.Base,
+    },
+    "kla": {
+        "base": kla.Base,
     },
 }
 

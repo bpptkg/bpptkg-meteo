@@ -7,6 +7,8 @@ from sqlalchemy.pool import NullPool
 from meteo.models.base import Base  # noqa
 from meteo.models.bbd import Babadan  # noqa
 from meteo.models.jro import JurangJero  # noqa
+from meteo.models.lbh import Labuhan  # noqa
+from meteo.models.kla import Klatakan  # noqa
 
 from . import settings
 
