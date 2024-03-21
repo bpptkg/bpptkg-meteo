@@ -49,5 +49,3 @@ class Klatakan(Base):
     ref_voltage = Column("ref_voltage", Float, index=True, nullable=True)
     heating_voltage = Column("heating_voltage", Float, index=True, nullable=True)
     id = Column("id", String(64), index=True, nullable=True)
-
-    raw = Column('raw', JSON, nullable=True)
