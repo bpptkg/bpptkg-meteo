@@ -26,6 +26,8 @@ def process_lines(timestamp, lines, station):
     # Create entry container.
     entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])
 
+    logger.info("Raw lines: %s", repr(lines))
+
     parser = VaisalaParser()
     for line in lines:
         s = parser.parse(line)
@@ -35,8 +37,6 @@ def process_lines(timestamp, lines, station):
             entry[comp["name"]] = comp["value"]
 
     entry["timestamp"] = timestamp
-
-    logger.info("Raw lines: %s", lines)
 
     logger.info("Payload to insert: %s", entry)
     try:
