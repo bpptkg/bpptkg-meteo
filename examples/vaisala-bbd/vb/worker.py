@@ -28,7 +28,7 @@ def process_lines(timestamp, lines, station):
 
     logger.info("Raw lines: %s", repr(lines))
 
-    parser = VaisalaParser()
+    parser = VaisalaParser(errors="ignore")
     for line in lines:
         s = parser.parse(line)
         for comp in s["components"]:
