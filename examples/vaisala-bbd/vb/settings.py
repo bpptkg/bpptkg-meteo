@@ -22,6 +22,14 @@ TELNET_LABUHAN_HOST = config("TELNET_LABUHAN_HOST", default="localhost")
 TELNET_LABUHAN_PORT = config("TELNET_LABUHAN_PORT", default=23, cast=int)
 TELNET_KLATAKAN_HOST = config("TELNET_KLATAKAN_HOST", default="localhost")
 TELNET_KLATAKAN_PORT = config("TELNET_KLATAKAN_PORT", default=23, cast=int)
+TELNET_NGEPOS_HOST = config("TELNET_NGEPOS_HOST", default="localhost")
+TELNET_NGEPOS_PORT = config("TELNET_NGEPOS_PORT", default=23, cast=int)
+TELNET_SELO_HOST = config("TELNET_SELO_HOST", default="localhost")
+TELNET_SELO_PORT = config("TELNET_SELO_PORT", default=23, cast=int)
+TELNET_JRAKAH_HOST = config("TELNET_JRAKAH_HOST", default="localhost")
+TELNET_JRAKAH_PORT = config("TELNET_JRAKAH_PORT", default=23, cast=int)
+TELNET_KALIURANG_HOST = config("TELNET_KALIURANG_HOST", default="localhost")
+TELNET_KALIURANG_PORT = config("TELNET_KALIURANG_PORT", default=23, cast=int)
 TELNET_TIMEOUT = config("TELNET_TIMEOUT", default=300, cast=int)
 TELNET_CONNECT_TIMEOUT = config("TELNET_CONNECT_TIMEOUT", default=60, cast=int)
 TELNET_RECONNECT_LIMIT = config("TELNET_RECONNECT_LIMIT", default=10, cast=int)
@@ -93,10 +101,18 @@ class Station(enum.Enum):
     JURANGJERO = "jurangjero"
     LABUHAN = "labuhan"
     KLATAKAN = "klatakan"
+    NGEPOS = "ngepos"
+    SELO = "selo"
+    JRAKAH = "jrakah"
+    KALIURANG = "kaliurang"
 
     CHOICES = [
         BABADAN,
         JURANGJERO,
         LABUHAN,
         KLATAKAN,
+        NGEPOS,
+        SELO,
+        JRAKAH,
+        KALIURANG,
     ]

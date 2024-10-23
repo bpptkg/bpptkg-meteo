@@ -9,7 +9,10 @@ from meteo.models.bbd import Babadan  # noqa
 from meteo.models.jro import JurangJero  # noqa
 from meteo.models.lbh import Labuhan  # noqa
 from meteo.models.kla import Klatakan  # noqa
-
+from meteo.models.ngep import Ngepos  # noqa
+from meteo.models.sel import Selo  # noqa
+from meteo.models.jra import Jrakah  # noqa
+from meteo.models.kal import Kaliurang  # noqa
 from . import settings
 
 logger = logging.getLogger(__name__)

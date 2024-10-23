@@ -22,6 +22,14 @@ def process_lines(timestamp, lines, station):
         model = models.Babadan
     elif station == Station.KLATAKAN.value:
         model = models.Klatakan
+    elif station == Station.NGEPOS.value:
+        model = models.Ngepos
+    elif station == Station.SELO.value:
+        model = models.Selo
+    elif station == Station.JRAKAH.value:
+        model = models.Jrakah
+    elif station == Station.KALIURANG.value:
+        model = models.Kaliurang
 
     # Create entry container.
     entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])

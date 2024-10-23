@@ -45,6 +45,18 @@ class App(SingleInstance):
         elif self.station == settings.Station.KLATAKAN.value:
             host = settings.TELNET_KLATAKAN_HOST
             port = settings.TELNET_KLATAKAN_PORT
+        elif self.station == settings.Station.JRAKAH.value:
+            host = settings.TELNET_JRAKAH_HOST
+            port = settings.TELNET_JRAKAH_PORT
+        elif self.station == settings.Station.NGEPOS.value:
+            host = settings.TELNET_NGEPOS_HOST
+            port = settings.TELNET_NGEPOS_PORT
+        elif self.station == settings.Station.SELO.value:
+            host = settings.TELNET_SELO_HOST
+            port = settings.TELNET_SELO_PORT
+        elif self.station == settings.Station.KALIURANG.value:
+            host = settings.TELNET_KALIURANG_HOST
+            port = settings.TELNET_KALIURANG_PORT
 
         logger.info(
             "Using telnet server on {host} port {port}".format(host=host, port=port)
