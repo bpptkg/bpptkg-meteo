@@ -10,6 +10,35 @@ from .settings import Station
 logger = logging.getLogger(__name__)
 
 
+def parse_entry(timestamp, lines):
+    # Create entry container.
+    entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])
+    parser = VaisalaParser(errors="ignore")
+    for line in lines:
+        s = parser.parse(line)
+        for comp in s["components"]:
+            # Get only the latest value for each field by replacing the value if
+            # number of each field captured is more than one except for rain_acc
+            # (Rc). rain_acc need to be accumulated.
+            if comp["name"] == "rain_acc":
+                current_value = comp["value"]
+                if current_value is None:
+                    current_value = 0
+                else:
+                    current_value = float(current_value)
+                previous_value = entry.get(comp["name"], 0)
+                if previous_value is None:
+                    previous_value = 0
+                else:
+                    previous_value = float(previous_value)
+                entry[comp["name"]] = previous_value + current_value
+            else:
+                entry[comp["name"]] = comp["value"]
+
+    entry["timestamp"] = timestamp
+    return entry
+
+
 def process_lines(timestamp, lines, station):
     """
     Process lines block associated with sampled data.
@@ -31,20 +60,8 @@ def process_lines(timestamp, lines, station):
     elif station == Station.KALIURANG.value:
         model = models.Kaliurang
 
-    # Create entry container.
-    entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])
-
     logger.info("Raw lines: %s", repr(lines))
-
-    parser = VaisalaParser(errors="ignore")
-    for line in lines:
-        s = parser.parse(line)
-        for comp in s["components"]:
-            # Get only the latest value for each field by replacing the value if
-            # number of each field captured is more than one.
-            entry[comp["name"]] = comp["value"]
-
-    entry["timestamp"] = timestamp
+    entry = parse_entry(timestamp, lines)
 
     logger.info("Payload to insert: %s", entry)
     try:
