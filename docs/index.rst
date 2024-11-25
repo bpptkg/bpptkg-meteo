@@ -12,6 +12,7 @@ applications such as BPPTKG Monitoring API (BMA) or any standalone applications.
     requirements
     installation
     guides
+    notes
     contributing
     support
     license
