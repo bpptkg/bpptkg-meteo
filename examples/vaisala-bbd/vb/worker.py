@@ -10,28 +10,40 @@ from .settings import Station
 logger = logging.getLogger(__name__)
 
 
-def parse_entry(timestamp, lines):
+def parse_entry(timestamp, lines, mode="accumulate"):
+    """
+    Parse lines block associated with sampled data.
+
+    Parameters
+    ----------
+    timestamp : str
+        Timestamp of the data.
+    lines : list
+        List of lines that contains the data.
+    mode : str
+        Rain accumulation mode. Either "replace" or "accumulate".
+    """
     # Create entry container.
     entry = dict([(v["name"], None) for k, v in FIELDS_MAPPING.items()])
     parser = VaisalaParser(errors="ignore")
     for line in lines:
         s = parser.parse(line)
         for comp in s["components"]:
-            # Get only the latest value for each field by replacing the value if
-            # number of each field captured is more than one except for rain_acc
-            # (Rc). rain_acc need to be accumulated.
             if comp["name"] == "rain_acc":
-                current_value = comp["value"]
-                if current_value is None:
-                    current_value = 0
+                if mode == "replace":
+                    entry[comp["name"]] = comp["value"]
                 else:
-                    current_value = float(current_value)
-                previous_value = entry.get(comp["name"], 0)
-                if previous_value is None:
-                    previous_value = 0
-                else:
-                    previous_value = float(previous_value)
-                entry[comp["name"]] = previous_value + current_value
+                    current_value = comp["value"]
+                    if current_value is None:
+                        current_value = 0
+                    else:
+                        current_value = float(current_value)
+                    previous_value = entry.get(comp["name"], 0)
+                    if previous_value is None:
+                        previous_value = 0
+                    else:
+                        previous_value = float(previous_value)
+                    entry[comp["name"]] = previous_value + current_value
             else:
                 entry[comp["name"]] = comp["value"]
 
@@ -61,7 +73,7 @@ def process_lines(timestamp, lines, station):
         model = models.Kaliurang
 
     logger.info("Raw lines: %s", repr(lines))
-    entry = parse_entry(timestamp, lines)
+    entry = parse_entry(timestamp, lines, mode="replace")
 
     logger.info("Payload to insert: %s", entry)
     try:
