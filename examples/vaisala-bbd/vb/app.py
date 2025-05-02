@@ -57,7 +57,9 @@ class App(SingleInstance):
         elif self.station == settings.Station.KALIURANG.value:
             host = settings.TELNET_KALIURANG_HOST
             port = settings.TELNET_KALIURANG_PORT
-
+        elif self.station == settings.Station.PASARBUBAR.value:
+            host = settings.TELNET_PASARBUBAR_HOST
+            port = settings.TELNET_PASARBUBAR_PORT
         logger.info(
             "Using telnet server on {host} port {port}".format(host=host, port=port)
         )

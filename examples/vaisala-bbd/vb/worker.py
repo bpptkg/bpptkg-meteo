@@ -59,6 +59,8 @@ def process_lines(timestamp, lines, station):
         model = models.Jrakah
     elif station == Station.KALIURANG.value:
         model = models.Kaliurang
+    elif station == Station.PASARBUBAR.value:
+        model = models.Pasarbubar
 
     logger.info("Raw lines: %s", repr(lines))
     entry = parse_entry(timestamp, lines)
