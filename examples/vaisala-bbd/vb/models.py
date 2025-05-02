@@ -13,7 +13,7 @@ from meteo.models.ngep import Ngepos  # noqa
 from meteo.models.sel import Selo  # noqa
 from meteo.models.jra import Jrakah  # noqa
 from meteo.models.kal import Kaliurang  # noqa
-from meteo.models.kal import Pasarbubar  # noqa
+from meteo.models.psbb import Pasarbubar  # noqa
 from . import settings
 
 logger = logging.getLogger(__name__)

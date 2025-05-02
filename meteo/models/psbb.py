@@ -8,7 +8,7 @@ class Pasarbubar(Base):
     Model to store Vaisala weather data from Pasarbubar station.
     """
 
-    __tablename__ = "Pasarbubar"
+    __tablename__ = "pasarbubar"
 
     timestamp = Column(
         "timestamp", DateTime, primary_key=True, index=True, autoincrement=False
